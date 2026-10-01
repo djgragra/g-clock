@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G-Clock</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="mode-onair show-seconds">
+  <div class="app">
+
+    <!-- TOP: brand · user buttons · mode badge · window controls -->
+    <header class="top">
+      <div class="brand">
+        <img id="logo" alt="" hidden>
+        <span id="brandName" class="brand-name">G-CLOCK</span>
+      </div>
+      <nav id="links" class="links chrome" aria-label="Links"></nav>
+      <div class="top-spacer"></div>
+      <button id="modeBadge" class="badge" type="button" data-i18n-title="mode.toggle">
+        <span class="badge-dot"></span><span id="modeText">ON AIR</span>
+      </button>
+      <div class="win-btns chrome">
+        <button id="btnSettings" class="icon-btn" type="button" data-i18n-title="settings.open"><span class="ic ic-gear"></span></button>
+        <button id="btnFullscreen" class="icon-btn" type="button" data-i18n-title="window.fullscreen"><span class="ic ic-full"></span></button>
+      </div>
+    </header>
+
+    <main class="stage">
+
+      <!-- ON AIR: the clock -->
+      <section id="viewClock" class="view-clock">
+        <div class="time-row">
+          <div id="clockTime" class="clock-time" aria-live="off">00:00:00</div>
+          <div id="clockPeriod" class="clock-period" hidden></div>
+        </div>
+        <div id="clockDate" class="clock-date">—</div>
+      </section>
+
+      <!-- REC: the recording timer -->
+      <section id="viewRec" class="view-rec" hidden>
+        <div class="mini-clock"><span id="miniTime">00:00:00</span><span id="miniDate" class="mini-date"></span></div>
+        <div id="timerState" class="timer-state"><span class="state-dot"></span><span id="timerStateText">READY</span></div>
+        <div id="timerDisplay" class="timer-display">00:00</div>
+        <div class="timer-bar"><div id="timerBarFill" class="timer-bar-fill"></div></div>
+        <div id="timerElapsed" class="timer-elapsed"></div>
+
+        <div id="timerControls" class="timer-controls">
+          <div id="timerSetup" class="timer-setup">
+            <div class="timer-input">
+              <input id="tMin" type="text" inputmode="numeric" maxlength="2" placeholder="MM" aria-label="Minutes">
+              <span class="timer-colon">:</span>
+              <input id="tSec" type="text" inputmode="numeric" maxlength="2" placeholder="SS" aria-label="Seconds">
+            </div>
+            <div id="timerPresets" class="timer-presets"></div>
+          </div>
+          <div class="timer-buttons">
+            <button id="tStart" type="button" class="btn btn-main" data-i18n="timer.start">START</button>
+            <button id="tPause" type="button" class="btn btn-main" data-i18n="timer.pause" hidden>PAUSE</button>
+            <button id="tReset" type="button" class="btn" data-i18n="timer.reset">RESET</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Next break (optional) -->
+      <div id="breakLine" class="break-line" hidden>
+        <span id="breakLabel" class="break-label">BREAK</span>
+        <span id="breakValue" class="break-value">--:--</span>
+      </div>
+    </main>
+
+    <footer class="bottom">
+      <div id="weatherStrip" class="weather-strip" hidden>
+        <div id="weatherCards" class="cards"></div>
+        <button id="weatherCredit" class="credit" type="button"></button>
+      </div>
+      <div id="cities" class="cities cards"></div>
+      <div id="newsBar" class="news-bar" hidden>
+        <div id="newsMeta" class="news-meta"></div>
+        <button id="newsHeadline" class="news-headline" type="button"></button>
+        <div id="newsCount" class="news-count"></div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Pre-roll 3·2·1 -->
+  <div id="preroll" class="preroll" hidden>
+    <div id="prerollNum" class="preroll-num">3</div>
+    <div class="preroll-hint" data-i18n="timer.prerollCancel">Space or Esc to cancel</div>
+  </div>
+
+  <!-- Update notice (quiet: never over the clock face) -->
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <!-- Settings -->
+  <div id="settings" class="settings" hidden>
+    <div id="settingsPanel" class="settings-panel" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <nav id="settingsNav" class="settings-nav"></nav>
+      <div class="settings-body">
+        <div class="settings-head">
+          <h1 id="settingsTitle" data-i18n="settings.title">Settings</h1>
+          <button id="settingsClose" type="button" class="btn" data-i18n="settings.close">Close</button>
+        </div>
+        <div id="settingsContent" class="settings-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/clock.js"></script>
+  <script src="js/breaks.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/cities.js"></script>
+  <script src="js/news.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/links.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
