@@ -11,12 +11,13 @@ export const SETTINGS_VERSION = 1;
 export const REPO_LINKS = ['https://open-meteo.com/', 'https://onairgarage.com', 'https://github.com/djgragra/g-clock'];
 
 export const LIMITS = {
-  cities: 8,
   feeds: 12,
   links: 8,
   places: 4,
   marks: 12,
   presets: 8,
+  programs: 40,
+  blocks: 60,
   logoBytes: 1_000_000
 };
 
@@ -36,15 +37,6 @@ export const SUGGESTED_FEEDS = [
   { name: 'Euronews', url: 'https://www.euronews.com/rss?format=mrss' }
 ];
 
-const DEFAULT_CITIES = [
-  { name: 'UTC', tz: 'UTC' },
-  { name: 'London', tz: 'Europe/London' },
-  { name: 'New York', tz: 'America/New_York' },
-  { name: 'Los Angeles', tz: 'America/Los_Angeles' },
-  { name: 'Tokyo', tz: 'Asia/Tokyo' },
-  { name: 'Sydney', tz: 'Australia/Sydney' }
-];
-
 export const newId = () => randomUUID().slice(0, 8);
 
 export function defaults() {
@@ -58,13 +50,14 @@ export function defaults() {
     keepAwake: false,
     airMode: 'onair', // 'onair' | 'rec'
     logo: null, // data: URL of a PNG/JPEG already resized to 512 px max
-    cities: DEFAULT_CITIES.map((c) => ({ id: newId(), ...c })),
-    breaks: { enabled: false, marks: [0, 30], label: 'BREAK', warnSec: 60 },
-    timer: { sound: false, preroll: true, presets: [60, 120, 180, 300, 600, 900] },
+    breaks: { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300 },
+    timer: { sound: false, preroll: true, dynamic: true, program: null, presets: [60, 120, 180, 300, 600, 900] },
+    programs: [], // recording programs: [{ id, name, blocks: [{ label, sec }], updated }]
     news: {
       enabled: true,
+      ticker: true,
       intervalMin: 10,
-      rotateSec: 10,
+      rotateSec: 15,
       feeds: DEFAULT_FEEDS.map((f) => ({ id: newId(), ...f }))
     },
     weather: { enabled: false, unit: 'c', places: [] },
@@ -121,6 +114,27 @@ function list(v, max) {
   return Array.isArray(v) ? v.slice(0, max) : null;
 }
 
+// Recording programs: a name and 1..60 blocks of 1 s .. 99:59 each. Anything malformed is dropped.
+export function sanitizePrograms(input) {
+  const arr = Array.isArray(input) ? input.slice(0, LIMITS.programs) : [];
+  const used = new Set();
+  return arr
+    .map((p) => {
+      const blocks = (Array.isArray(p?.blocks) ? p.blocks : [])
+        .filter((b) => b && Number.isFinite(Number(b.sec)) && Number(b.sec) >= 1)
+        .slice(0, LIMITS.blocks)
+        .map((b) => ({ label: cleanText(b.label, 80), sec: Math.min(99 * 60 + 59, Math.round(Number(b.sec))) }));
+      return { p, blocks };
+    })
+    .filter(({ p, blocks }) => cleanText(p?.name, 60) && blocks.length)
+    .map(({ p, blocks }) => ({
+      id: cleanId(p.id, used),
+      name: cleanText(p.name, 60),
+      blocks,
+      updated: Number.isFinite(Number(p.updated)) ? Math.round(Number(p.updated)) : Date.now()
+    }));
+}
+
 // ---- per-key sanitizers: (input, current) -> sanitized value --------------------------
 
 const SANITIZERS = {
@@ -141,15 +155,6 @@ const SANITIZERS = {
     return v;
   },
 
-  cities: (v, cur) => {
-    const arr = list(v, LIMITS.cities);
-    if (!arr) return cur;
-    const used = new Set();
-    return arr
-      .filter((c) => c && isValidTimeZone(c.tz))
-      .map((c) => ({ id: cleanId(c.id, used), name: cleanText(c.name, 40) || String(c.tz).split('/').pop().replace(/_/g, ' '), tz: c.tz }));
-  },
-
   breaks: (v, cur) => {
     if (!v || typeof v !== 'object') return cur;
     const marks = Array.isArray(v.marks)
@@ -159,7 +164,7 @@ const SANITIZERS = {
       enabled: bool(v.enabled, cur.enabled),
       marks,
       label: v.label === undefined ? cur.label : cleanText(v.label, 16) || cur.label,
-      warnSec: int(v.warnSec, 5, 600, cur.warnSec)
+      warnSec: int(v.warnSec, 10, 1800, cur.warnSec)
     };
   },
 
@@ -171,7 +176,8 @@ const SANITIZERS = {
         .sort((a, b) => a - b)
         .slice(0, LIMITS.presets);
     }
-    return { sound: bool(v.sound, cur.sound), preroll: bool(v.preroll, cur.preroll), presets };
+    const program = v.program === null ? null : typeof v.program === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(v.program) ? v.program : cur.program;
+    return { sound: bool(v.sound, cur.sound), preroll: bool(v.preroll, cur.preroll), dynamic: bool(v.dynamic, cur.dynamic), program, presets };
   },
 
   news: (v, cur) => {
@@ -192,6 +198,7 @@ const SANITIZERS = {
     }
     return {
       enabled: bool(v.enabled, cur.enabled),
+      ticker: bool(v.ticker, cur.ticker),
       intervalMin: int(v.intervalMin, 2, 120, cur.intervalMin),
       rotateSec: int(v.rotateSec, 4, 60, cur.rotateSec),
       feeds
@@ -216,6 +223,8 @@ const SANITIZERS = {
     }
     return { enabled: bool(v.enabled, cur.enabled), unit: oneOf(v.unit, ['c', 'f'], cur.unit), places };
   },
+
+  programs: (v, cur) => (Array.isArray(v) ? sanitizePrograms(v) : cur),
 
   links: (v, cur) => {
     const arr = list(v, LIMITS.links);

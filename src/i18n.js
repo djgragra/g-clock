@@ -6,6 +6,11 @@ const TEXT = {
   exportTitle: { en: 'Export settings', it: 'Esporta impostazioni', es: 'Exportar ajustes' },
   importTitle: { en: 'Import settings', it: 'Importa impostazioni', es: 'Importar ajustes' },
   jsonFilter: { en: 'Settings file (JSON)', it: 'File impostazioni (JSON)', es: 'Archivo de ajustes (JSON)' },
+  programsExportTitle: { en: 'Export programs', it: 'Esporta programmi', es: 'Exportar programas' },
+  programsImportTitle: { en: 'Import programs', it: 'Importa programmi', es: 'Importar programas' },
+  programsFilter: { en: 'Programs file (JSON)', it: 'File programmi (JSON)', es: 'Archivo de programas (JSON)' },
+  reportTitle: { en: 'Save report', it: 'Salva report', es: 'Guardar informe' },
+  txtFilter: { en: 'Text file', it: 'File di testo', es: 'Archivo de texto' },
   resetMessage: { en: 'Restore the default settings?', it: 'Ripristinare le impostazioni predefinite?', es: '¿Restaurar los ajustes predeterminados?' },
   resetDetail: {
     en: 'Feeds, cities, buttons, logo and all other settings go back to their defaults.',

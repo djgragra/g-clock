@@ -6,10 +6,10 @@ GC.settingsUI = (() => {
   const { h, $ } = GC;
   const t = (k, p) => GC.t(k, p);
 
-  const SECTIONS = ['general', 'breaks', 'timer', 'cities', 'news', 'weather', 'buttons', 'data', 'about'];
+  const SECTIONS = ['general', 'breaks', 'timer', 'news', 'weather', 'buttons', 'data', 'about'];
   let current = 'general';
   let updateInfo = null;
-  const LIMITS = { cities: 8, feeds: 12, links: 8, places: 4 };
+  const LIMITS = { feeds: 12, links: 8, places: 4 };
 
   // ---- small builders ----
   const row = (labelKey, control, hintKey) =>
@@ -120,7 +120,7 @@ GC.settingsUI = (() => {
       }), 'breaks.marksHint'),
       m,
       row('breaks.label', text(b.label, (v) => save({ breaks: { label: v } }), { maxLength: 16 })),
-      row('breaks.warn', num(b.warnSec, 5, 600, (v) => save({ breaks: { warnSec: v } })), 'breaks.warnHint')
+      row('breaks.warn', num(b.warnSec, 10, 1800, (v) => save({ breaks: { warnSec: v } })), 'breaks.warnHint')
     );
   }
 
@@ -142,34 +142,9 @@ GC.settingsUI = (() => {
       }), 'timer.presetsHint'),
       m,
       row('timer.preroll', check(tm.preroll, (v) => save({ timer: { preroll: v } })), 'timer.prerollHint'),
+      row('timer.dynamic', check(tm.dynamic, (v) => save({ timer: { dynamic: v } })), 'timer.dynamicHint'),
       row('timer.sound', check(tm.sound, (v) => save({ timer: { sound: v } })), 'timer.soundHint')
     );
-  }
-
-  // ---- Cities ----
-  function cities(s) {
-    const zones = ['UTC', ...(Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : [])];
-    const m = msg();
-    const write = (list, rebuild) => save({ cities: list }, rebuild);
-    const list = h('div', { class: 'list' },
-      s.cities.map((c, i) =>
-        h('div', { class: 'list-row' },
-          text(c.name, (v) => write(s.cities.map((x, j) => (j === i ? { ...x, name: v || x.name } : x)), false), { maxLength: 40, class: 'grow' }),
-          h('span', { class: 'mono dim', text: c.tz }),
-          h('button', { class: 'btn small', type: 'button', text: '↑', disabled: i === 0, title: t('common.up'), onclick: () => { const a = [...s.cities]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; write(a, true); } }),
-          h('button', { class: 'btn small', type: 'button', text: t('common.remove'), onclick: () => write(s.cities.filter((_, j) => j !== i), true) })
-        )
-      ));
-    const name = text('', () => {}, { placeholder: t('cities.name'), maxLength: 40 });
-    const tz = text('', () => {}, { placeholder: t('cities.tzPlaceholder'), list: 'tzList2' });
-    const add = h('button', { class: 'btn', type: 'button', text: t('common.add'), onclick: () => {
-      const zone = zones.find((z) => z.toLowerCase() === tz.value.trim().toLowerCase());
-      if (!zone) return say(m, 'cities.tzInvalid', 'err');
-      if (s.cities.length >= LIMITS.cities) return say(m, 'cities.max', 'err', { n: LIMITS.cities });
-      write([...s.cities, { name: name.value.trim() || zone.split('/').pop().replace(/_/g, ' '), tz: zone }], true);
-    } });
-    return section('sec.cities', 'cities.intro', list,
-      h('div', { class: 'list-row add' }, name, tz, h('datalist', { id: 'tzList2' }, zones.map((z) => h('option', { value: z }))), add), m);
   }
 
   // ---- News ----
@@ -206,6 +181,7 @@ GC.settingsUI = (() => {
     const suggestions = (GC.state.suggestedFeeds || []).filter((f) => !n.feeds.some((x) => x.url === f.url));
     return section('sec.news', 'news.intro',
       row('news.enabled', check(n.enabled, (v) => write({ enabled: v }))),
+      row('news.tickerRow', check(n.ticker, (v) => write({ ticker: v })), 'news.tickerHint'),
       list,
       h('div', { class: 'list-row add' }, name, url, h('button', { class: 'btn', type: 'button', text: t('common.add'), onclick: () => addFeed({ name: name.value.trim() || (url.value.match(/^https:\/\/([^/]+)/i) || [])[1] || '', url: url.value.trim() }) })),
       m,
@@ -390,7 +366,7 @@ GC.settingsUI = (() => {
         h('dt', { text: t('about.weather') }), h('dd', {}, link('https://open-meteo.com/', 'Open-Meteo.com (CC BY 4.0)'))),
       h('h2', { class: 'sub', text: t('about.keys') }),
       h('dl', { class: 'about-list' },
-        ...[['Space', 'keys.space'], ['R', 'keys.reset'], ['O', 'keys.mode'], ['F11', 'keys.fullscreen'], ['S', 'keys.settings'], ['← →', 'keys.news'], ['Esc', 'keys.esc']].flatMap(([k, d]) => [h('dt', { class: 'mono', text: k }), h('dd', { text: t(d) })])));
+        ...[['Space', 'keys.space'], ['N', 'keys.next'], ['R', 'keys.reset'], ['O', 'keys.mode'], ['F / F11', 'keys.fullscreen'], ['S', 'keys.settings'], ['← →', 'keys.news'], ['Esc', 'keys.esc']].flatMap(([k, d]) => [h('dt', { class: 'mono', text: k }), h('dd', { text: t(d) })])));
   }
 
   // ---- shell ----
@@ -398,7 +374,7 @@ GC.settingsUI = (() => {
     const s = GC.state.settings;
     const nav = $('settingsNav');
     nav.replaceChildren(...SECTIONS.map((id) => h('button', { class: 'nav-item' + (id === current ? ' active' : ''), type: 'button', text: t('sec.' + id), onclick: () => { current = id; render(); } })));
-    const builders = { general, breaks, timer, cities, news, weather, buttons, data, about };
+    const builders = { general, breaks, timer, news, weather, buttons, data, about };
     const body = $('settingsContent');
     const scroll = body.scrollTop;
     const content = await builders[current](s);

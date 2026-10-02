@@ -1,11 +1,10 @@
 'use strict';
 
-// Start-up, mode switch (On Air / Rec), keyboard, quiet controls.
+// Start-up, mode switch (On Air / Rec), keyboard.
 (() => {
   const { $ } = GC;
   const IDLE_MS = 4000;
   let idleTimer = null;
-  let overChrome = false;
   let lastSecond = -1;
 
   // ---- applying settings ----
@@ -14,8 +13,6 @@
     const s = GC.state.settings;
     GC.setLanguage(GC.state.lang);
     GC.clock.configure(s, GC.state.locale);
-    GC.breaks.configure(s.breaks);
-    GC.cities.configure(s, GC.state.locale);
     GC.timer.configure(s.timer);
     GC.news.configure(s, GC.state.locale);
     GC.weather.configure(s);
@@ -40,20 +37,24 @@
     const rec = mode === 'rec';
     document.body.classList.toggle('mode-rec', rec);
     document.body.classList.toggle('mode-onair', !rec);
-    $('viewClock').hidden = rec;
     $('viewRec').hidden = !rec;
-    $('modeText').textContent = GC.t(rec ? 'mode.rec' : 'mode.onair');
+    $('btnOnAir').className = 'tog-btn' + (rec ? '' : ' act-red');
+    $('btnRec').className = 'tog-btn' + (rec ? ' act-green' : '');
+    const badge = $('clockBadge');
+    badge.className = 'clock-badge ' + (rec ? 'recording' : 'onair');
+    $('clockBadgeText').textContent = GC.t(rec ? 'mode.rec' : 'mode.onair');
   }
 
-  function toggleMode() {
+  function setMode(next) {
+    const current = GC.state.settings.airMode;
+    if (next === current) return;
     // Leaving Rec while the timer is counting would hide it silently: refuse instead.
-    if (GC.state.settings.airMode === 'rec' && GC.timer.isBusy()) {
-      const badge = $('modeBadge');
-      badge.classList.add('deny');
-      setTimeout(() => badge.classList.remove('deny'), 500);
+    if (current === 'rec' && GC.timer.isBusy()) {
+      const tog = document.querySelector('header .tog');
+      tog.classList.add('deny');
+      setTimeout(() => tog.classList.remove('deny'), 500);
       return;
     }
-    const next = GC.state.settings.airMode === 'rec' ? 'onair' : 'rec';
     GC.state.settings.airMode = next;
     paintMode(next);
     window.api.settings.update({ airMode: next });
@@ -66,21 +67,15 @@
     if (sec !== lastSecond) {
       lastSecond = sec;
       GC.clock.render(now);
-      GC.breaks.render(GC.clock.secInHour(now));
-      GC.cities.render(now);
     }
     GC.timer.render();
   }
 
-  // ---- quiet controls: buttons fade after a few seconds without mouse or keyboard ----
+  // ---- the cursor hides in full screen after a few seconds ----
   function wake() {
     document.body.classList.remove('idle');
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-      const busy = GC.settingsUI.isOpen() || overChrome || document.activeElement?.closest?.('.chrome, .timer-controls');
-      if (!busy) document.body.classList.add('idle');
-      else wake();
-    }, IDLE_MS);
+    idleTimer = setTimeout(() => document.body.classList.add('idle'), IDLE_MS);
   }
 
   // ---- keyboard ----
@@ -89,29 +84,34 @@
     return tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
   }
 
+  const isRec = () => GC.state.settings?.airMode === 'rec';
+
   document.addEventListener('keydown', (e) => {
     wake();
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'Escape') {
+      if (GC.programs.closeTop()) return;
       if (GC.settingsUI.isOpen()) GC.settingsUI.close();
       else if (GC.timer.isPreroll()) GC.timer.cancelPreroll();
       return;
     }
-    if (GC.settingsUI.isOpen() || typing(e)) return;
+    if (GC.settingsUI.isOpen() || GC.programs.isAnyOpen() || typing(e)) return;
     const key = e.key.toLowerCase();
-    if (e.key === ' ' && GC.state.settings.airMode === 'rec') {
+    if (e.key === ' ' && isRec()) {
       e.preventDefault();
       document.activeElement?.blur?.();
       GC.timer.toggle();
-    } else if (key === 'r' && GC.state.settings.airMode === 'rec') GC.timer.reset();
-    else if (key === 'o') toggleMode();
+    } else if (key === 'n' && isRec()) GC.timer.next();
+    else if (key === 'r' && isRec()) GC.timer.reset();
+    else if (key === 'o') setMode(isRec() ? 'onair' : 'rec');
     else if (key === 's') GC.settingsUI.open();
+    else if (key === 'f') window.api.window.toggleFullscreen();
     else if (e.key === 'ArrowRight') GC.news.step(1);
     else if (e.key === 'ArrowLeft') GC.news.step(-1);
   });
   // a button must not also "click" when Space is used as the timer key
   document.addEventListener('keyup', (e) => {
-    if (e.key === ' ' && !typing(e) && !GC.settingsUI.isOpen() && GC.state.settings?.airMode === 'rec') e.preventDefault();
+    if (e.key === ' ' && !typing(e) && !GC.settingsUI.isOpen() && !GC.programs.isAnyOpen() && isRec()) e.preventDefault();
   });
   for (const ev of ['mousemove', 'mousedown', 'touchstart']) document.addEventListener(ev, wake, { passive: true });
 
@@ -125,17 +125,15 @@
   // ---- boot ----
   async function boot() {
     GC.timer.init();
+    GC.programs.init();
     GC.news.init();
     GC.weather.init();
     GC.settingsUI.init();
 
-    $('modeBadge').addEventListener('click', toggleMode);
+    $('btnOnAir').addEventListener('click', () => setMode('onair'));
+    $('btnRec').addEventListener('click', () => setMode('rec'));
     $('btnSettings').addEventListener('click', () => GC.settingsUI.open());
     $('btnFullscreen').addEventListener('click', () => window.api.window.toggleFullscreen());
-    for (const el of document.querySelectorAll('.chrome')) {
-      el.addEventListener('mouseenter', () => (overChrome = true));
-      el.addEventListener('mouseleave', () => (overChrome = false));
-    }
 
     window.api.on.news((state) => GC.news.update(state));
     window.api.on.weather((state) => GC.weather.update(state));

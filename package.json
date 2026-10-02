@@ -1,7 +1,7 @@
 {
   "name": "g-clock",
-  "version": "26.10.1",
-  "description": "Big studio clock for radio presenters: time, recording timer with pre-roll, world clocks, news headlines",
+  "version": "26.10.2",
+  "description": "Studio clock for radio presenters: 60-minute dial with stopset markers, headlines, weather, recording timer with pre-roll",
   "main": "main.js",
   "type": "module",
   "author": "Graziano Melzi <hello@onairgarage.com> (https://onairgarage.com)",

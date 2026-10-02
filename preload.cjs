@@ -10,6 +10,16 @@ contextBridge.exposeInMainWorld('api', {
     import: () => ipcRenderer.invoke('settings:import'),
     reset: () => ipcRenderer.invoke('settings:reset')
   },
+  programs: {
+    export: () => ipcRenderer.invoke('programs:export'),
+    import: () => ipcRenderer.invoke('programs:import')
+  },
+  report: {
+    save: (name, text) => ipcRenderer.invoke('report:save', name, text)
+  },
+  clipboard: {
+    write: (text) => ipcRenderer.invoke('clipboard:write', text)
+  },
   news: {
     get: () => ipcRenderer.invoke('news:get'),
     refresh: () => ipcRenderer.invoke('news:refresh')

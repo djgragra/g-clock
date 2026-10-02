@@ -1,23 +1,30 @@
 # G-Clock
 
-Free desktop app (Windows / macOS / Linux): a **big studio clock for radio presenters**. Time and date readable from metres away, an On Air / Rec switch, a recording timer with a 3·2·1 pre-roll, clocks for other cities, a countdown to your next break, news headlines from the RSS feeds you choose, and optional weather.
+Free desktop app (Windows / macOS / Linux): a **studio clock for radio presenters**. The classic 60-minute dial with stopset markers, news headlines from the feeds you choose, optional weather, an On Air / Rec switch and a recording timer with programs, blocks and a 3·2·1 pre-roll.
 
 By Graziano Melzi · [OnAir Garage](https://onairgarage.com) — contact: hello@onairgarage.com
 
 ## Features
 
-- **Huge time and date**, 24 or 12 hours, any time zone, seconds on or off. Dark only, high contrast.
-- **ON AIR / REC** switch (key `O`).
-- **Recording timer** (REC): free time, configurable quick times, visual 3·2·1 pre-roll, pause and resume, overrun shown in red, optional beeps. Space starts and pauses, `R` resets.
-- **Break counter** (optional): counts down to the next break at the minutes of the hour you choose (for example `0, 30`), with a warning and a NOW flash.
-- **World clocks** strip, fully configurable.
-- **News**: headlines from RSS / Atom feeds you add (https only), one big headline at a time. Only title, source, time and link are shown; a click opens the article in your browser. The app reads the feeds itself, so there is no CORS problem and no server in between.
-- **Weather** (optional, **off by default**): places found with Open-Meteo's geocoding; Open-Meteo credit always visible while it is on.
-- **Your buttons**: add your own buttons that open a web page in your browser (remote guest link, studio camera, station site…), each with a note that explains what it is for, plus ready-made ideas.
+- **The studio dial**, on the left, as in Studio Clock: 60 minute segments that fill as the hour goes by (green, orange, red), the current minute filling second by second. In the centre, the time left to the end of the hour; in the last minutes it says END OF HOUR.
+- **Stopsets** (ad breaks, news, jingles): you choose the minutes of the hour (for example `0, 30`). They are the larger markers on the dial, turn red when close and during their minute the centre shows the stopset name. A bar under the columns says when the next one comes and counts down to it.
+- **Headlines**, in the middle: the RSS / Atom feeds you add (https only), one tab per source, a page of six at a time turning every few seconds, plus a scrolling ticker at the bottom. Only title, source, time and link are shown; a click opens the article in your browser. The app reads the feeds itself, so there is no CORS problem and no server in between.
+- **Weather** (optional, **off by default**), on the right: places found with Open-Meteo's geocoding; the Open-Meteo credit is always visible while it is on.
+- **Date and time** large in the header, 24 or 12 hours, any time zone.
+- **ON AIR / REC** switch (key `O`). **REC** replaces the dial with the recording timer:
+  - **free time** with quick times, or a **program** made of blocks (opening, interview, closing…) each with its own time;
+  - visual 3·2·1 pre-roll, pause and resume, overrun in red, optional beeps;
+  - **end block**, redo and back; click a block to record out of order; several takes per block;
+  - **dynamic timing**: what a block runs over or under is taken from, or given to, the next ones;
+  - a **report** at the end of the program (copy it or save it as text);
+  - programs are created and edited in the app, and can be imported and exported as JSON.
+  Space starts and pauses, `N` ends the block, `R` resets.
+- **Your buttons**: buttons that open a web page in your browser (remote guest link, studio camera, station site…), each with a note that explains what it is for, plus ready-made ideas.
 - **Your logo**: PNG, JPG or SVG, resized to 512 px at most and stored only on your computer.
-- Always on top, full screen (`F11`), keep the screen awake.
+- Always on top, full screen (`F` or `F11`), keep the screen awake.
 - **Languages**: English (default), Italiano, Español — follows the system, can be changed in Settings.
-- Settings stay on your computer; **import / export as JSON** (no passwords or keys: the app uses none).
+- Settings and programs stay on your computer; **import / export as JSON** (no passwords or keys: the app uses none).
+- Made for a wide screen (16:9). On a tall window the dial goes on top and the headlines below.
 
 ## Privacy and network
 
@@ -53,7 +60,7 @@ Requires [Node.js](https://nodejs.org) 18+.
 ```bash
 npm install
 npm start
-npm test        # unit tests: settings validation, feed parsing, versions, translations
+npm test        # unit tests: settings validation, feed parsing, dial and timer arithmetic, versions, translations
 ```
 
 Build installers (output in `release/`):
@@ -74,7 +81,7 @@ Releases are built by GitHub Actions when a `v*` tag is pushed (version in `pack
 
 ## Italiano
 
-Grande orologio da studio per i conduttori radiofonici: ora e data leggibili da lontano, interruttore On Air / Rec, timer di registrazione con pre-roll 3·2·1, orologi di altre città, conto alla rovescia verso il prossimo break, titoli dai feed RSS che scegli tu e meteo facoltativo (spento di default). Pulsanti configurabili per aprire pagine web (ospite remoto, webcam di studio…), logo personalizzabile, impostazioni importabili/esportabili in JSON. Scarica l'installer dalla pagina [Releases](https://github.com/djgragra/g-clock/releases). L'app non è firmata: su macOS usa clic destro → Apri (o il comando `xattr` sopra); su Windows SmartScreen → "Ulteriori informazioni" → "Esegui comunque". Quando esce una nuova versione, l'app la segnala nelle Impostazioni: "Scarica e verifica" scarica l'installer giusto e ne controlla lo SHA-256; non si installa nulla senza di te.
+Orologio da studio per i conduttori radiofonici: il classico quadrante a 60 spicchi con gli stopset, titoli dai feed RSS che scegli tu, meteo facoltativo (spento di default), interruttore On Air / Rec e timer di registrazione con programmi a blocchi e pre-roll 3·2·1. Pulsanti configurabili per aprire pagine web (ospite remoto, webcam di studio…), logo personalizzabile, impostazioni importabili/esportabili in JSON. Scarica l'installer dalla pagina [Releases](https://github.com/djgragra/g-clock/releases). L'app non è firmata: su macOS usa clic destro → Apri (o il comando `xattr` sopra); su Windows SmartScreen → "Ulteriori informazioni" → "Esegui comunque". Quando esce una nuova versione, l'app la segnala nelle Impostazioni: "Scarica e verifica" scarica l'installer giusto e ne controlla lo SHA-256; non si installa nulla senza di te.
 
 ## License
 

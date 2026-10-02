@@ -36,7 +36,7 @@ test('every key used by the interface exists', () => {
   }
   // keys built at run time
   for (const s of ['ready', 'preroll', 'recording', 'ending', 'paused', 'over']) used.add('timer.state.' + s);
-  for (const s of ['general', 'breaks', 'timer', 'cities', 'news', 'weather', 'buttons', 'data', 'about']) used.add('sec.' + s);
+  for (const s of ['general', 'breaks', 'timer', 'news', 'weather', 'buttons', 'data', 'about']) used.add('sec.' + s);
   for (const s of ['guest', 'meet', 'jitsi', 'zoom', 'cam', 'site', 'chat', 'traffic']) used.add('btn.idea.' + s);
   for (const s of ['cam', 'site', 'chat', 'traffic']) used.add('btn.ideaLabel.' + s);
   const wxGroups = fs.readFileSync(path.join(root, 'js', 'weather.js'), 'utf-8').match(/CODE_GROUP = \{([\s\S]*?)\};/)[1];

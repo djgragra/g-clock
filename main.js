@@ -1,9 +1,9 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain, powerSaveBlocker, screen, session, shell } from 'electron';
+import { app, BrowserWindow, Menu, clipboard, dialog, ipcMain, powerSaveBlocker, screen, session, shell } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { defaults, buildExport, parseImport, parseWebUrl, REPO_LINKS, SUGGESTED_FEEDS } from './src/schema.js';
+import { defaults, buildExport, parseImport, parseWebUrl, sanitizePrograms, APP_ID, LIMITS, REPO_LINKS, SUGGESTED_FEEDS } from './src/schema.js';
 import { getSettings, updateSettings, replaceSettings, getWindowBounds, setWindowBounds, getNewsCache, setNewsCache } from './src/store.js';
 import { createNews } from './src/feeds.js';
 import { createWeather, geocode } from './src/weather.js';
@@ -215,6 +215,71 @@ handle('settings:reset', async () => {
   replaceSettings(defaults());
   afterSettingsChange(prev);
   return { ok: true, ...payload() };
+});
+
+// ---- recording programs: import / export, report ----------------------------------------------
+
+handle('programs:export', async () => {
+  const res = await dialog.showSaveDialog(mainWindow, {
+    title: T('programsExportTitle'),
+    defaultPath: 'g-clock-programs.json',
+    filters: [{ name: T('programsFilter'), extensions: ['json'] }]
+  });
+  if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+  try {
+    const body = { app: APP_ID, kind: 'programs', exportedAt: new Date().toISOString(), programs: getSettings().programs };
+    fs.writeFileSync(res.filePath, JSON.stringify(body, null, 2), 'utf-8');
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+// Imported programs are merged with the existing ones: same id = replaced, others kept.
+handle('programs:import', async () => {
+  const res = await dialog.showOpenDialog(mainWindow, {
+    title: T('programsImportTitle'),
+    properties: ['openFile'],
+    filters: [{ name: T('programsFilter'), extensions: ['json'] }]
+  });
+  if (res.canceled || !res.filePaths[0]) return { ok: false, canceled: true };
+  try {
+    const file = res.filePaths[0];
+    if (fs.statSync(file).size > 5_000_000) return { ok: false, error: 'invalid' };
+    const parsed = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    if (parsed && !Array.isArray(parsed) && parsed.app !== undefined && parsed.app !== APP_ID) return { ok: false, error: 'foreign' };
+    const incoming = sanitizePrograms(Array.isArray(parsed) ? parsed : parsed?.programs);
+    if (!incoming.length) return { ok: false, error: 'invalid' };
+    const byId = new Map(getSettings().programs.map((p) => [p.id, p]));
+    for (const p of incoming) byId.set(p.id, p);
+    updateSettings({ programs: [...byId.values()].slice(0, LIMITS.programs) });
+    return { ok: true, ...payload() };
+  } catch {
+    return { ok: false, error: 'invalid' };
+  }
+});
+
+handle('report:save', async (name, text) => {
+  if (typeof text !== 'string' || text.length > 200_000) return { ok: false, error: 'invalid' };
+  const base = String(name || 'report').replace(/[^\p{L}\p{N}_-]+/gu, '_').slice(0, 60) || 'report';
+  const res = await dialog.showSaveDialog(mainWindow, {
+    title: T('reportTitle'),
+    defaultPath: `report-${base}.txt`,
+    filters: [{ name: T('txtFilter'), extensions: ['txt'] }]
+  });
+  if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+  try {
+    fs.writeFileSync(res.filePath, text, 'utf-8');
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+handle('clipboard:write', (text) => {
+  if (typeof text !== 'string' || text.length > 200_000) return { ok: false };
+  clipboard.writeText(text);
+  return { ok: true };
 });
 
 handle('news:get', () => news.state());

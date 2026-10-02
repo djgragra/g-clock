@@ -8,81 +8,127 @@
   <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="mode-onair show-seconds">
-  <div class="app">
+<body class="mode-onair">
+  <div class="root">
 
-    <!-- TOP: brand · user buttons · mode badge · window controls -->
-    <header class="top">
-      <div class="brand">
+    <!-- HEADER: logo · ON AIR / REC · your buttons · date and time · settings -->
+    <header>
+      <div class="logo-area">
         <img id="logo" alt="" hidden>
-        <span id="brandName" class="brand-name">G-CLOCK</span>
+        <div id="brandName" class="logo-text"><span class="t1">STUDIO</span><span class="t2">G-CLOCK</span></div>
       </div>
-      <nav id="links" class="links chrome" aria-label="Links"></nav>
-      <div class="top-spacer"></div>
-      <button id="modeBadge" class="badge" type="button" data-i18n-title="mode.toggle">
-        <span class="badge-dot"></span><span id="modeText">ON AIR</span>
-      </button>
-      <div class="win-btns chrome">
-        <button id="btnSettings" class="icon-btn" type="button" data-i18n-title="settings.open"><span class="ic ic-gear"></span></button>
-        <button id="btnFullscreen" class="icon-btn" type="button" data-i18n-title="window.fullscreen"><span class="ic ic-full"></span></button>
+      <div class="hd"></div>
+      <div class="tog">
+        <button id="btnOnAir" class="tog-btn act-red" type="button">ON AIR</button>
+        <button id="btnRec" class="tog-btn" type="button">REC</button>
       </div>
+      <nav id="links" class="studio-btns" aria-label="Links"></nav>
+      <div class="hsp"></div>
+      <div id="hDate" class="h-date">—</div>
+      <div id="hTime" class="h-time">00:00:00</div>
+      <div class="hd"></div>
+      <button id="btnSettings" class="hbtn" type="button" data-i18n-title="settings.open"><span class="ic ic-gear"></span></button>
+      <button id="btnFullscreen" class="hbtn" type="button" data-i18n-title="window.fullscreen"><span class="ic ic-full"></span></button>
     </header>
 
-    <main class="stage">
+    <!-- MAIN: dial · headlines · weather   (REC: the timer takes the whole area) -->
+    <main id="stage" class="main">
 
-      <!-- ON AIR: the clock -->
-      <section id="viewClock" class="view-clock">
-        <div class="time-row">
-          <div id="clockTime" class="clock-time" aria-live="off">00:00:00</div>
-          <div id="clockPeriod" class="clock-period" hidden></div>
+      <section class="col-clock">
+        <div id="clockBadge" class="clock-badge onair">
+          <span class="cb-dot"></span><span id="clockBadgeText">ON AIR</span>
         </div>
-        <div id="clockDate" class="clock-date">—</div>
+        <svg id="dial" class="dial" viewBox="0 0 700 700" role="img"></svg>
       </section>
 
-      <!-- REC: the recording timer -->
-      <section id="viewRec" class="view-rec" hidden>
-        <div class="mini-clock"><span id="miniTime">00:00:00</span><span id="miniDate" class="mini-date"></span></div>
-        <div id="timerState" class="timer-state"><span class="state-dot"></span><span id="timerStateText">READY</span></div>
-        <div id="timerDisplay" class="timer-display">00:00</div>
-        <div class="timer-bar"><div id="timerBarFill" class="timer-bar-fill"></div></div>
-        <div id="timerElapsed" class="timer-elapsed"></div>
+      <div class="vdiv vdiv-news"></div>
 
-        <div id="timerControls" class="timer-controls">
-          <div id="timerSetup" class="timer-setup">
-            <div class="timer-input">
-              <input id="tMin" type="text" inputmode="numeric" maxlength="2" placeholder="MM" aria-label="Minutes">
-              <span class="timer-colon">:</span>
-              <input id="tSec" type="text" inputmode="numeric" maxlength="2" placeholder="SS" aria-label="Seconds">
+      <section id="newsPanel" class="col-news">
+        <div class="col-news-header">
+          <span class="nh-label" data-i18n="news.title">LATEST NEWS</span>
+          <div id="newsTabs" class="src-tabs"></div>
+        </div>
+        <div id="newsList" class="news-list"></div>
+        <div id="newsCount" class="news-count"></div>
+      </section>
+
+      <div class="vdiv vdiv-info"></div>
+
+      <section id="infoPanel" class="col-info">
+        <div class="col-info-header"><span class="ih-label" data-i18n="wx.title">WEATHER</span></div>
+        <div id="weatherRows" class="info-panel"></div>
+        <button id="weatherCredit" class="credit" type="button"></button>
+      </section>
+
+      <!-- REC: recording timer with programs -->
+      <section id="viewRec" class="rec-panel" hidden>
+        <div class="t-stage">
+
+          <div class="t-hdr">
+            <div class="tog">
+              <button id="modeFreeBtn" class="tog-btn act-blue" type="button" data-i18n="timer.mode.free">FREE</button>
+              <button id="modeProgBtn" class="tog-btn" type="button" data-i18n="timer.mode.prog">PROGRAM</button>
             </div>
-            <div id="timerPresets" class="timer-presets"></div>
+            <div class="prog-select-wrap">
+              <select id="progSelect" class="prog-select" aria-label="Program"></select>
+              <button id="btnManage" class="hbtn" type="button" data-i18n-title="timer.manage"><span class="ic ic-gear"></span></button>
+            </div>
           </div>
-          <div class="timer-buttons">
-            <button id="tStart" type="button" class="btn btn-main" data-i18n="timer.start">START</button>
-            <button id="tPause" type="button" class="btn btn-main" data-i18n="timer.pause" hidden>PAUSE</button>
-            <button id="tReset" type="button" class="btn" data-i18n="timer.reset">RESET</button>
-          </div>
-        </div>
-      </section>
 
-      <!-- Next break (optional) -->
-      <div id="breakLine" class="break-line" hidden>
-        <span id="breakLabel" class="break-label">BREAK</span>
-        <span id="breakValue" class="break-value">--:--</span>
-      </div>
+          <div id="blockMeta" class="block-meta">
+            <span id="bmProg" class="bm-prog">—</span><span class="bm-sep">·</span>
+            <span id="bmPos" class="bm-pos"></span><span class="bm-sep">·</span>
+            <span id="bmLabel" class="bm-label"></span>
+          </div>
+
+          <div class="display-wrap">
+            <div id="timerState" class="state-badge"><span class="sb-dot"></span><span id="timerStateText">READY</span></div>
+            <div id="timerDisplay" class="rec-display">00:00</div>
+            <div id="timerElapsed" class="elapsed"></div>
+            <div class="progress"><div id="timerBarFill" class="progress-bar"></div></div>
+          </div>
+
+          <div id="freeInputs" class="free-inputs">
+            <input id="tMin" class="rec-input" type="text" inputmode="numeric" maxlength="2" placeholder="MIN" aria-label="Minutes">
+            <span class="rec-sep">:</span>
+            <input id="tSec" class="rec-input" type="text" inputmode="numeric" maxlength="2" placeholder="SEC" aria-label="Seconds">
+          </div>
+          <div id="timerPresets" class="presets"></div>
+
+          <div class="rec-btns">
+            <button id="tStart" class="rec-btn start" type="button" data-i18n="timer.start">START</button>
+            <button id="tPause" class="rec-btn stop" type="button" data-i18n="timer.pause" hidden>PAUSE</button>
+            <button id="tNext" class="rec-btn next" type="button" data-i18n="timer.next">END BLOCK</button>
+            <button id="tRedo" class="rec-btn back" type="button" data-i18n="timer.redo">REDO</button>
+            <button id="tBack" class="rec-btn back" type="button" data-i18n="timer.back">BACK</button>
+            <button id="tReset" class="rec-btn reset" type="button" data-i18n="timer.reset">RESET</button>
+          </div>
+
+          <div class="options">
+            <button id="optSound" class="opt" type="button" data-i18n="timer.sound">SOUND</button>
+            <button id="optPreroll" class="opt" type="button">3·2·1</button>
+            <button id="optDyn" class="opt" type="button" data-i18n="timer.dyn" data-i18n-title="timer.dynTitle">DYN</button>
+            <button id="optReport" class="opt" type="button" data-i18n="timer.report" data-i18n-title="timer.reportTitle">REPORT</button>
+          </div>
+          <div class="rec-hint" data-i18n="timer.hint">SPACE start/pause · N end block · R reset · O On Air / Rec</div>
+        </div>
+
+        <aside id="blocksPanel" class="blocks-panel">
+          <div class="bp-head">
+            <span class="bp-title" data-i18n="timer.blocks">BLOCKS</span>
+            <button id="btnRestore" class="bp-restore" type="button" data-i18n="timer.restore" data-i18n-title="timer.restoreTitle">RESTORE</button>
+          </div>
+          <div id="blocksList" class="bp-list"></div>
+          <div id="blocksFoot" class="bp-foot"></div>
+        </aside>
+      </section>
     </main>
 
-    <footer class="bottom">
-      <div id="weatherStrip" class="weather-strip" hidden>
-        <div id="weatherCards" class="cards"></div>
-        <button id="weatherCredit" class="credit" type="button"></button>
-      </div>
-      <div id="cities" class="cities cards"></div>
-      <div id="newsBar" class="news-bar" hidden>
-        <div id="newsMeta" class="news-meta"></div>
-        <button id="newsHeadline" class="news-headline" type="button"></button>
-        <div id="newsCount" class="news-count"></div>
-      </div>
-    </footer>
+    <!-- News ticker -->
+    <div id="ticker" class="ticker" hidden>
+      <div class="tk-label"><span class="tk-dot"></span><span data-i18n="news.ticker">NEWS</span></div>
+      <div class="tk-track"><div id="tkInner" class="tk-inner"></div></div>
+    </div>
   </div>
 
   <!-- Pre-roll 3·2·1 -->
@@ -91,7 +137,70 @@
     <div class="preroll-hint" data-i18n="timer.prerollCancel">Space or Esc to cancel</div>
   </div>
 
-  <!-- Update notice (quiet: never over the clock face) -->
+  <!-- Programs: manage -->
+  <div id="manageOverlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span class="modal-title" data-i18n="manage.title">Manage programs</span>
+        <button id="manageClose" class="modal-x" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body"><div id="manageList" class="prog-list"></div></div>
+      <div class="modal-foot">
+        <button id="manageImport" class="mbtn ghost" type="button" data-i18n="manage.import">IMPORT</button>
+        <button id="manageExport" class="mbtn ghost" type="button" data-i18n="manage.export">EXPORT</button>
+        <div class="mf-sp"></div>
+        <span id="manageMsg" class="sync-badge"></span>
+        <button id="manageNew" class="mbtn primary" type="button" data-i18n="manage.new">+ NEW</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Programs: editor -->
+  <div id="editorOverlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span id="editorTitle" class="modal-title">New program</span>
+        <button id="editorClose" class="modal-x" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="fld">
+          <span class="fld-lbl" data-i18n="ed.name">Program name</span>
+          <input id="edName" class="fld-in" type="text" maxlength="60" data-i18n-placeholder="ed.namePh">
+        </label>
+        <div class="ed-blocks-head"><span data-i18n="timer.blocks">BLOCKS</span><span id="edTotal" class="ed-total"></span></div>
+        <div id="edBlocks" class="ed-blocks"></div>
+        <button id="edAdd" class="mbtn ghost addrow" type="button" data-i18n="ed.add">+ ADD BLOCK</button>
+      </div>
+      <div class="modal-foot">
+        <button id="edDelete" class="mbtn danger" type="button" data-i18n="ed.delete">DELETE</button>
+        <div class="mf-sp"></div>
+        <button id="edCancel" class="mbtn ghost" type="button" data-i18n="settings.close">CLOSE</button>
+        <button id="edSave" class="mbtn primary" type="button" data-i18n="ed.save">SAVE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Programs: report -->
+  <div id="reportOverlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <span id="reportTitle" class="modal-title">Recording report</span>
+        <button id="reportClose" class="modal-x" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <table id="reportTable" class="report-table"></table>
+        <div id="reportTot" class="report-tot"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="reportCopy" class="mbtn ghost" type="button" data-i18n="rep.copy">COPY</button>
+        <button id="reportSave" class="mbtn ghost" type="button" data-i18n="rep.export">EXPORT .TXT</button>
+        <div class="mf-sp"></div>
+        <button id="reportOk" class="mbtn primary" type="button" data-i18n="settings.close">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update notice (quiet) -->
   <div id="toast" class="toast" role="status" hidden></div>
 
   <!-- Settings -->
@@ -110,10 +219,11 @@
 
   <script src="js/i18n.js"></script>
   <script src="js/util.js"></script>
+  <script src="js/dialmath.js"></script>
+  <script src="js/timermath.js"></script>
   <script src="js/clock.js"></script>
-  <script src="js/breaks.js"></script>
   <script src="js/timer.js"></script>
-  <script src="js/cities.js"></script>
+  <script src="js/programs.js"></script>
   <script src="js/news.js"></script>
   <script src="js/weather.js"></script>
   <script src="js/links.js"></script>

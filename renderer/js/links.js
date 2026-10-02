@@ -8,12 +8,11 @@ GC.links = (() => {
     nav.replaceChildren(
       ...settings.links.map((l) =>
         GC.h('button', {
-          class: 'btn link-btn',
+          class: 'studio-btn',
           type: 'button',
-          text: l.label,
           title: l.note ? `${l.note}\n${l.url}` : l.url,
           onclick: () => window.api.links.open(l.url)
-        })
+        }, GC.h('span', { class: 'sb-dot' }), l.label)
       )
     );
     nav.hidden = !settings.links.length;

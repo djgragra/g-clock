@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { defaults, sanitizeSettings, parseImport, buildExport, parseWebUrl, isValidTimeZone, LIMITS } from '../src/schema.js';
+import { defaults, sanitizeSettings, sanitizePrograms, parseImport, buildExport, parseWebUrl, isValidTimeZone, LIMITS } from '../src/schema.js';
 
 test('defaults survive their own validation unchanged', () => {
   const d = defaults();
@@ -8,8 +8,13 @@ test('defaults survive their own validation unchanged', () => {
   assert.deepEqual(again, d);
 });
 
-test('weather is off by default, news has three neutral international feeds', () => {
+test('weather is off by default, stopsets on the dial are on, news has three neutral international feeds', () => {
   const d = defaults();
+  assert.deepEqual(d.breaks.marks, [0, 30]);
+  assert.equal(d.breaks.enabled, true);
+  assert.equal(d.news.ticker, true);
+  assert.deepEqual(d.programs, []);
+  assert.equal(d.cities, undefined);
   assert.equal(d.weather.enabled, false);
   assert.equal(d.news.feeds.length, 3);
   assert.ok(d.news.feeds.every((f) => f.url.startsWith('https://')));
@@ -36,8 +41,10 @@ test('links and feeds with bad URLs are dropped', () => {
 test('limits are enforced', () => {
   const many = Array.from({ length: 50 }, (_, i) => ({ label: 'l' + i, url: 'https://a.com/' + i }));
   assert.equal(sanitizeSettings({ links: many }).links.length, LIMITS.links);
-  const cities = Array.from({ length: 50 }, () => ({ name: 'x', tz: 'UTC' }));
-  assert.equal(sanitizeSettings({ cities }).cities.length, LIMITS.cities);
+  const programs = Array.from({ length: 80 }, (_, i) => ({ id: 'p' + i, name: 'P' + i, blocks: [{ label: 'a', sec: 60 }] }));
+  assert.equal(sanitizeSettings({ programs }).programs.length, LIMITS.programs);
+  const blocks = Array.from({ length: 200 }, () => ({ label: 'b', sec: 30 }));
+  assert.equal(sanitizeSettings({ programs: [{ id: 'x', name: 'N', blocks }] }).programs[0].blocks.length, LIMITS.blocks);
 });
 
 test('time zones are checked', () => {
@@ -45,7 +52,6 @@ test('time zones are checked', () => {
   assert.ok(!isValidTimeZone('Mars/Olympus'));
   assert.equal(sanitizeSettings({ timeZone: 'Mars/Olympus' }).timeZone, 'system');
   assert.equal(sanitizeSettings({ timeZone: 'Asia/Tokyo' }).timeZone, 'Asia/Tokyo');
-  assert.equal(sanitizeSettings({ cities: [{ name: 'x', tz: 'Nope/Nope' }] }).cities.length, 0);
 });
 
 test('logo: only raster data URLs from the resize step', () => {
@@ -65,6 +71,37 @@ test('partial patches keep the other values', () => {
 
 test('break marks: integers 0-59, unique, sorted', () => {
   assert.deepEqual(sanitizeSettings({ breaks: { marks: [30, 0, 30, 61, -1, 1.5, 'x', 15] } }).breaks.marks, [0, 15, 30]);
+});
+
+test('programs: valid ones kept, malformed ones dropped, durations bounded', () => {
+  const out = sanitizePrograms([
+    { id: 'a1', name: '  Morning   Show ', blocks: [{ label: 'Open', sec: 90 }, { label: 'bad', sec: 0 }, { label: 'neg', sec: -5 }, { label: 'huge', sec: 999999 }, null], updated: 5 },
+    { id: 'a2', name: '', blocks: [{ label: 'x', sec: 10 }] },
+    { id: 'a3', name: 'No blocks', blocks: [] },
+    { id: 'a4', name: 'Bad blocks', blocks: 'nope' },
+    'junk',
+    null
+  ]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].name, 'Morning Show');
+  assert.deepEqual(out[0].blocks.map((b) => b.sec), [90, 5999]);
+  assert.equal(out[0].updated, 5);
+});
+
+test('programs: duplicate and invalid ids get fresh unique ones', () => {
+  const out = sanitizePrograms([{ id: 'same', name: 'A', blocks: [{ label: '', sec: 10 }] }, { id: 'same', name: 'B', blocks: [{ label: '', sec: 10 }] }, { id: '../etc', name: 'C', blocks: [{ label: '', sec: 10 }] }]);
+  assert.equal(new Set(out.map((p) => p.id)).size, 3);
+  assert.ok(out.every((p) => /^[a-z0-9-]{1,40}$/i.test(p.id)));
+});
+
+test('programs: a patch without programs keeps them; timer selection and dynamic flag are validated', () => {
+  const base = sanitizeSettings({ programs: [{ id: 'x1', name: 'N', blocks: [{ label: 'a', sec: 60 }] }], timer: { program: 'x1', dynamic: false } });
+  const next = sanitizeSettings({ hour12: true }, base);
+  assert.equal(next.programs.length, 1);
+  assert.equal(next.timer.program, 'x1');
+  assert.equal(next.timer.dynamic, false);
+  assert.equal(sanitizeSettings({ timer: { program: '../../x' } }, base).timer.program, 'x1');
+  assert.equal(sanitizeSettings({ timer: { program: null } }, base).timer.program, null);
 });
 
 test('timer presets and ranges', () => {

@@ -1,6 +1,6 @@
 'use strict';
 
-// Optional weather strip (Open-Meteo). Shown only when switched on in Settings.
+// Optional weather column (Open-Meteo). Shown only when switched on in Settings.
 GC.weather = (() => {
   let settings = null;
   let data = { rows: [] };
@@ -19,18 +19,21 @@ GC.weather = (() => {
   };
 
   function render() {
-    const strip = $('weatherStrip');
     const on = !!settings?.weather.enabled && settings.weather.places.length > 0;
-    strip.hidden = !on;
+    $('infoPanel').hidden = !on;
+    document.body.classList.toggle('no-info', !on);
     if (!on) return;
     const unit = settings.weather.unit === 'f' ? '°F' : '°C';
     const rows = new Map(data.rows.map((r) => [r.id, r]));
-    $('weatherCards').replaceChildren(
+    $('weatherRows').replaceChildren(
       ...settings.weather.places.map((p) => {
         const r = rows.get(p.id);
         const temp = r && r.temp !== null ? `${r.temp}${unit}` : '—';
         const group = r && r.code !== null ? CODE_GROUP[r.code] : null;
-        return GC.h('div', { class: 'card' }, GC.h('div', { class: 'card-name', text: p.name }), GC.h('div', { class: 'card-time', text: temp }), GC.h('div', { class: 'card-sub', text: group ? GC.t('wx.' + group) : data.error ? GC.t('wx.unavailable') : '' }));
+        return GC.h('div', { class: 'wx-row' },
+          GC.h('span', { class: 'wx-city', text: p.name }),
+          GC.h('span', { class: 'wx-temp', text: temp }),
+          GC.h('span', { class: 'wx-desc', text: group ? GC.t('wx.' + group) : data.error ? GC.t('wx.unavailable') : '' }));
       })
     );
     $('weatherCredit').textContent = GC.t('wx.credit');
