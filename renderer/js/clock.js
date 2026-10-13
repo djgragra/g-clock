@@ -7,6 +7,7 @@
 // when no stopsets are set). The header shows date and time too.
 GC.clock = (() => {
   const M = GC.dialMath;
+  const S = GC.schedMath;
   const NS = 'http://www.w3.org/2000/svg';
 
   // geometry, in viewBox units (700 x 700)
@@ -29,7 +30,10 @@ GC.clock = (() => {
   let locale = 'en';
   let dateFmt;
   let dialDateFmt;
-  let cfg = { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300 };
+  let cfg = { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300, grids: [] };
+  let evCfg = { enabled: true, list: [] };
+  let builtKey = null; // the stopset minutes the ring was drawn for; it is redrawn when a schedule changes them
+  let dayFmt;
 
   let segs = [];
   let markers = [];
@@ -43,15 +47,21 @@ GC.clock = (() => {
     for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
     return e;
   };
-  const marksOn = () => (cfg.enabled ? cfg.marks : []);
 
-  function build() {
+  // Day of the week and second of the day in the clock's time zone, for schedules and events.
+  function zoned(date) {
+    const p = {};
+    for (const part of dayFmt.formatToParts(date)) p[part.type] = part.value;
+    return { day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(p.weekday), secOfDay: (Number(p.hour) % 24) * 3600 + Number(p.minute) * 60 + Number(p.second) };
+  }
+
+  function build(marks) {
+    builtKey = marks.join(',');
     const svg = GC.$('dial');
     svg.replaceChildren();
     svg.setAttribute('aria-label', GC.t('dial.aria'));
     segs = [];
     markers = [];
-    const marks = marksOn();
 
     const ring = make('g');
     for (let i = 0; i < 60; i++) {
@@ -94,10 +104,15 @@ GC.clock = (() => {
     hour12 = settings.hour12;
     showSeconds = settings.showSeconds;
     cfg = settings.breaks;
+    evCfg = settings.events;
     locale = GC.latn(loc);
+    dayFmt = GC.dtf('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+    el.eventBar = GC.$('eventBar');
+    for (const id of ['evLabel', 'evTime', 'evCount']) el[id] = GC.$(id);
     dateFmt = GC.dtf(locale, { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' });
     dialDateFmt = GC.dtf(locale, { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' });
-    build();
+    builtKey = null; // drawn by the next render
+    last = {};
     for (const id of ['hTime', 'hDate']) head[id] = GC.$(id);
   }
 
@@ -108,13 +123,53 @@ GC.clock = (() => {
     }
   };
 
+  // 18:00 or 6:00 PM, like the clock
+  const eventTime = (min) => (hour12 ? `${Math.floor(min / 60) % 12 || 12}:${GC.pad(min % 60)} ${min < 720 ? 'AM' : 'PM'}` : S.hhmm(min));
+  const weekdayName = (i) => GC.dtf(locale, { timeZone: 'UTC', weekday: 'short' }).format(new Date(Date.UTC(2024, 0, 7 + i)));
+
+  // The next fixed event: name, time and a countdown; the one warning turns it red, then "NOW" for a few seconds.
+  function renderEvent(z) {
+    const active = evCfg.enabled ? S.activeEvent(evCfg, z.day, z.secOfDay, NOW_SECONDS) : null;
+    const next = evCfg.enabled && !active ? S.nextEvent(evCfg, z.day, z.secOfDay) : null;
+    const shown = active || next;
+    if (el.eventBar.hidden === !shown && !shown) return;
+    el.eventBar.hidden = !shown;
+    if (!shown) return;
+    let label;
+    let time;
+    let count;
+    let state;
+    if (active) {
+      label = active.label;
+      time = eventTime(active.time);
+      count = GC.t('dial.now');
+      state = 'now';
+    } else {
+      const ahead = Math.floor((z.secOfDay + next.remaining) / 86400); // days from today
+      label = next.event.label;
+      time = (ahead > 0 ? weekdayName((z.day + ahead) % 7) + ' ' : '') + eventTime(next.event.time);
+      count = S.countdown(next.remaining);
+      state = S.eventState(next.event, next.remaining);
+    }
+    setText(el.evLabel, 'evLabel', label);
+    setText(el.evTime, 'evTime', time);
+    setText(el.evCount, 'evCount', count);
+    if (last.evState !== state) {
+      last.evState = state;
+      el.eventBar.className = 'event-bar ' + state;
+    }
+  }
+
   function render(date) {
-    if (!el.time) return;
+    if (!dayFmt) return;
     const t = GC.timeText(date, locale, tz, hour12, true);
     const minute = Number(t.m);
     const second = Number(t.s);
     const sec = minute * 60 + second;
-    const marks = marksOn();
+    const z = zoned(date);
+    // the schedule that applies now decides which minutes are stopsets; the ring is redrawn when they change
+    const marks = cfg.enabled ? S.activeMarks(cfg, z.day, z.secOfDay).marks : [];
+    if (marks.join(',') !== builtKey) build(marks);
     const blink = second % 2 === 0;
 
     // header: time and date
@@ -177,6 +232,7 @@ GC.clock = (() => {
     }
     setText(el.label, 'label', label);
     setText(el.count, 'count', value);
+    renderEvent(z);
     if (last.state !== state) {
       last.state = state;
       el.count.setAttribute('class', 'dial-count ' + state);

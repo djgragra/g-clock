@@ -63,7 +63,15 @@ GC.news = (() => {
 
     if (!items.length) {
       const failing = data.feeds?.some((f) => f.enabled && f.error);
-      list.replaceChildren(GC.h('div', { class: 'news-empty', text: GC.t(failing ? 'news.unavailable' : 'news.loading') }));
+      const noFeeds = !cfg.feeds.some((f) => f.enabled);
+      // no feed at all: a welcome with the logo and the way to add one
+      list.replaceChildren(noFeeds
+        ? GC.h('div', { class: 'welcome' },
+            GC.h('img', { class: 'welcome-logo', src: 'img/logo.svg', alt: '' }),
+            GC.h('div', { class: 'welcome-title', text: GC.t('news.emptyTitle') }),
+            GC.h('div', { class: 'welcome-hint', text: GC.t('news.emptyHint') }),
+            GC.h('button', { class: 'btn', type: 'button', text: GC.t('news.emptyBtn'), onclick: () => GC.settingsUI.open('news') }))
+        : GC.h('div', { class: 'news-empty', text: GC.t(failing ? 'news.unavailable' : 'news.loading') }));
       $('newsCount').textContent = '';
       return;
     }
@@ -132,8 +140,23 @@ GC.news = (() => {
     restart();
   }
 
+  // The status pill in the header: how many of the feeds answered at the last refresh.
+  function paintPill() {
+    const pill = $('feedPill');
+    const feeds = (data.feeds || []).filter((f) => f.enabled);
+    const on = cfg.enabled && data.enabled !== false && feeds.length > 0;
+    pill.hidden = !on;
+    if (!on) return;
+    const bad = feeds.filter((f) => f.error).length;
+    const loaded = feeds.filter((f) => f.fetchedAt).length;
+    const state = bad === feeds.length ? 'bad' : bad ? 'warn' : loaded ? 'ok' : 'wait';
+    pill.className = 'pill ' + state;
+    $('feedPillText').textContent = state === 'wait' ? GC.t('pill.loading') : GC.t('pill.feeds', { n: feeds.length - bad, t: feeds.length });
+  }
+
   function update(state) {
     data = state;
+    paintPill();
     paintTabs();
     paint();
     paintTicker();
@@ -141,6 +164,7 @@ GC.news = (() => {
 
   function configure(settings, loc) {
     cfg = settings.news;
+    paintPill();
     locale = GC.latn(loc);
     hour12 = settings.hour12;
     tickerSig = '';

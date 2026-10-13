@@ -66,7 +66,7 @@ test('logo: only raster data URLs from the resize step', () => {
 test('partial patches keep the other values', () => {
   const base = sanitizeSettings({ breaks: { enabled: true, marks: [10, 40], label: 'ADS', warnSec: 30 } });
   const next = sanitizeSettings({ breaks: { enabled: false } }, base);
-  assert.deepEqual(next.breaks, { enabled: false, marks: [10, 40], label: 'ADS', warnSec: 30 });
+  assert.deepEqual(next.breaks, { enabled: false, marks: [10, 40], label: 'ADS', warnSec: 30, grids: [] });
 });
 
 test('break marks: integers 0-59, unique, sorted', () => {

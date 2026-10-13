@@ -5,16 +5,26 @@ import { randomUUID } from 'node:crypto';
 // sanitizeSettings(): unknown keys are dropped, types and ranges are enforced, URLs are checked.
 
 export const APP_ID = 'com.onairgarage.gclock';
+export const APP_SLUG = 'g-clock'; // the "app" field of a backup file (apps/COMMON-FEATURES.md); older files carry APP_ID
+export const isOwnFile = (app) => app === undefined || app === APP_SLUG || app === APP_ID;
 export const SETTINGS_VERSION = 1;
 
 // Fixed addresses the app may open in the browser besides the user's own links and headlines.
-export const REPO_LINKS = ['https://open-meteo.com/', 'https://onairgarage.com', 'https://github.com/djgragra/g-clock'];
+export const REPO_LINKS = [
+  'https://open-meteo.com/',
+  'https://onairgarage.com',
+  'https://onairgarage.com/tools/g-clock/',
+  'https://github.com/djgragra/g-clock',
+  'https://github.com/djgragra/g-clock/blob/main/README.md'
+];
 
 export const LIMITS = {
   feeds: 12,
   links: 8,
   places: 4,
   marks: 12,
+  grids: 8,
+  events: 20,
   presets: 8,
   programs: 40,
   blocks: 60,
@@ -50,7 +60,11 @@ export function defaults() {
     keepAwake: false,
     airMode: 'onair', // 'onair' | 'rec'
     logo: null, // data: URL of a PNG/JPEG already resized to 512 px max
-    breaks: { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300 },
+    // marks = the stopset minutes of the hour; grids = optional other sets of minutes for certain days and hours
+    // (the first grid that matches now wins, otherwise marks apply). No grids = one set all the time, as before.
+    breaks: { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300, grids: [] },
+    // fixed events at a time of day (news, ad block…): the clock counts down to the next one
+    events: { enabled: true, list: [] },
     timer: { sound: false, preroll: true, dynamic: true, program: null, presets: [60, 120, 180, 300, 600, 900] },
     programs: [], // recording programs: [{ id, name, blocks: [{ label, sec }], updated }]
     news: {
@@ -135,6 +149,47 @@ export function sanitizePrograms(input) {
     }));
 }
 
+export const DAYS_ALL = [0, 1, 2, 3, 4, 5, 6]; // 0 = Sunday … 6 = Saturday, like Date.getDay()
+
+const cleanDays = (v) => {
+  const days = Array.isArray(v) ? [...new Set(v.map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort() : [];
+  return days.length ? days : DAYS_ALL;
+};
+const cleanMarks = (v) => [...new Set(v.map((m) => Number(m)).filter((m) => Number.isInteger(m) && m >= 0 && m <= 59))].sort((a, b) => a - b).slice(0, LIMITS.marks);
+
+// Stopset grids: { id, name, days, from, to, marks }. from / to are minutes of the day (0..1439 and 0..1440);
+// to <= from means "until the next day" (22:00-02:00); from === to means all day.
+export function sanitizeGrids(input) {
+  const arr = Array.isArray(input) ? input.slice(0, LIMITS.grids) : [];
+  const used = new Set();
+  return arr
+    .filter((g) => g && typeof g === 'object' && Array.isArray(g.marks))
+    .map((g) => ({
+      id: cleanId(g.id, used),
+      name: cleanText(g.name, 24),
+      days: cleanDays(g.days),
+      from: int(g.from, 0, 1439, 0),
+      to: int(g.to, 0, 1440, 1440),
+      marks: cleanMarks(g.marks)
+    }));
+}
+
+// Fixed events: { id, label, time (minute of the day), days, warnSec (the one visual warning, seconds before), enabled }.
+export function sanitizeEvents(input) {
+  const arr = Array.isArray(input) ? input.slice(0, LIMITS.events) : [];
+  const used = new Set();
+  return arr
+    .filter((e) => e && typeof e === 'object' && Number.isFinite(Number(e.time)))
+    .map((e) => ({
+      id: cleanId(e.id, used),
+      label: cleanText(e.label, 24) || '—',
+      time: int(e.time, 0, 1439, 0),
+      days: cleanDays(e.days),
+      warnSec: int(e.warnSec, 5, 3600, 60),
+      enabled: bool(e.enabled, true)
+    }));
+}
+
 // ---- per-key sanitizers: (input, current) -> sanitized value --------------------------
 
 const SANITIZERS = {
@@ -157,15 +212,19 @@ const SANITIZERS = {
 
   breaks: (v, cur) => {
     if (!v || typeof v !== 'object') return cur;
-    const marks = Array.isArray(v.marks)
-      ? [...new Set(v.marks.map((m) => Number(m)).filter((m) => Number.isInteger(m) && m >= 0 && m <= 59))].sort((a, b) => a - b).slice(0, LIMITS.marks)
-      : cur.marks;
+    const marks = Array.isArray(v.marks) ? cleanMarks(v.marks) : cur.marks;
     return {
       enabled: bool(v.enabled, cur.enabled),
       marks,
       label: v.label === undefined ? cur.label : cleanText(v.label, 16) || cur.label,
-      warnSec: int(v.warnSec, 10, 1800, cur.warnSec)
+      warnSec: int(v.warnSec, 10, 1800, cur.warnSec),
+      grids: Array.isArray(v.grids) ? sanitizeGrids(v.grids) : cur.grids || []
     };
+  },
+
+  events: (v, cur) => {
+    if (!v || typeof v !== 'object') return cur;
+    return { enabled: bool(v.enabled, cur.enabled), list: Array.isArray(v.list) ? sanitizeEvents(v.list) : cur.list };
   },
 
   timer: (v, cur) => {
@@ -262,7 +321,7 @@ export function buildExport(settings) {
 // Accepts an export file ({ app, settings }) or a bare settings object. Throws on foreign files.
 export function parseImport(parsed) {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('invalid');
-  if (parsed.app !== undefined && parsed.app !== APP_ID) throw new Error('foreign');
+  if (!isOwnFile(parsed.app)) throw new Error('foreign');
   const body = parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : parsed;
   if (!Object.keys(SANITIZERS).some((k) => Object.hasOwn(body, k))) throw new Error('invalid');
   // Start from defaults: whatever the file does not carry keeps its default value.
