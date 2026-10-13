@@ -67,8 +67,8 @@
     if (sec !== lastSecond) {
       lastSecond = sec;
       GC.clock.render(now);
-      GC.updates.syncVisibility(); // the update strip steps aside in full screen and while recording
     }
+    GC.updates.syncVisibility(); // the update strip steps aside in full screen and while recording
     GC.timer.render();
   }
 
