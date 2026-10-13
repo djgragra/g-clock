@@ -1,16 +1,32 @@
-import { app, BrowserWindow, Menu, clipboard, dialog, ipcMain, powerSaveBlocker, screen, session, shell } from 'electron';
+import { app, BrowserWindow, Menu, clipboard, dialog, ipcMain, net, powerSaveBlocker, screen, session, shell } from 'electron';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { defaults, buildExport, parseImport, parseWebUrl, sanitizePrograms, APP_ID, LIMITS, REPO_LINKS, SUGGESTED_FEEDS } from './src/schema.js';
-import { getSettings, updateSettings, replaceSettings, getWindowBounds, setWindowBounds, getNewsCache, setNewsCache } from './src/store.js';
+import { defaults, parseWebUrl, sanitizePrograms, isOwnFile, APP_SLUG, LIMITS, REPO_LINKS, SUGGESTED_FEEDS } from './src/schema.js';
+import {
+  getSettings, updateSettings, replaceSettings, getWindowBounds, setWindowBounds, getNewsCache, setNewsCache,
+  getUpdateState, setUpdateState, getLastSeenVersion, setLastSeenVersion, hadSettingsFile, settingsFile
+} from './src/store.js';
 import { createNews } from './src/feeds.js';
 import { createWeather, geocode } from './src/weather.js';
-import { checkForUpdate, downloadInstaller, REPO } from './src/updater.js';
+import {
+  checkForUpdate, downloadInstaller, sweepPartials, bannerState, remindLaterState, skipVersionState, makeSafetyCopy, installPlan,
+  whatsNew, startupKind, REPO
+} from './src/updater.js';
+import { buildBackup, prepareImport, applyImport, backupFileName, MAX_BACKUP_BYTES } from './src/backup.js';
+import { createLogger } from './src/logs.js';
+import { buildSupportInfo } from './src/support.js';
 import { resolveLanguage, resolveLocale, T } from './src/i18n.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Daily log files (5 MB at most each, 7 days kept). Nothing secret is ever written: G-Clock has none, and no addresses.
+const logDir = path.join(app.getPath('userData'), 'logs');
+const logger = createLogger({ dir: logDir, prefix: 'g-clock' });
+logger.prune();
+process.on('uncaughtExceptionMonitor', (err) => logger.log('error', `uncaught: ${err?.message || err}`, 'main'));
 
 // One clock at a time: a second launch just brings the first one forward.
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -27,7 +43,17 @@ const send = (channel, data) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, data);
 };
 
-const news = createNews({ getSettings, getCache: getNewsCache, setCache: setNewsCache, onUpdate: (s) => send('event:news', s) });
+// a feed that starts failing is logged once, not at every refresh
+const feedFailing = new Set();
+const noteFeedStates = (st) => {
+  for (const f of st.feeds) {
+    if (f.enabled && f.error && !feedFailing.has(f.id)) {
+      feedFailing.add(f.id);
+      logger.log('warn', `feed "${f.name}" failed: ${f.error}`, 'news');
+    } else if (!f.error) feedFailing.delete(f.id);
+  }
+};
+const news = createNews({ getSettings, getCache: getNewsCache, setCache: setNewsCache, onUpdate: (st) => { noteFeedStates(st); send('event:news', st); } });
 const weather = createWeather({ getSettings, onUpdate: (s) => send('event:weather', s) });
 
 // ---- window ----------------------------------------------------------------------------
@@ -166,22 +192,26 @@ handle('settings:update', (patch) => {
   return payload();
 });
 
-handle('settings:export', async () => {
+// ---- backup and restore (apps/COMMON-FEATURES.md, section 3) -----------------------------------------
+
+handle('backup:export', async () => {
   const res = await dialog.showSaveDialog(mainWindow, {
     title: T('exportTitle'),
-    defaultPath: `g-clock-settings-${new Date().toISOString().slice(0, 10)}.json`,
+    defaultPath: path.join(app.getPath('documents'), backupFileName()),
     filters: [{ name: T('jsonFilter'), extensions: ['json'] }]
   });
   if (res.canceled || !res.filePath) return { ok: false, canceled: true };
   try {
-    fs.writeFileSync(res.filePath, JSON.stringify(buildExport(getSettings()), null, 2), 'utf-8');
+    fs.writeFileSync(res.filePath, JSON.stringify(buildBackup(getSettings()), null, 2), 'utf-8');
+    logger.log('info', 'backup exported', 'backup');
     return { ok: true };
   } catch (err) {
+    logger.log('error', `backup export failed: ${err.code || err.message}`, 'backup');
     return { ok: false, error: err.message };
   }
 });
 
-handle('settings:import', async () => {
+handle('backup:import', async () => {
   const res = await dialog.showOpenDialog(mainWindow, {
     title: T('importTitle'),
     properties: ['openFile'],
@@ -190,13 +220,25 @@ handle('settings:import', async () => {
   if (res.canceled || !res.filePaths[0]) return { ok: false, canceled: true };
   try {
     const file = res.filePaths[0];
-    if (fs.statSync(file).size > 5_000_000) return { ok: false, error: 'too-large' };
-    const next = parseImport(JSON.parse(fs.readFileSync(file, 'utf-8')));
+    if (fs.statSync(file).size > MAX_BACKUP_BYTES) return { ok: false, error: 'too-large' };
+    const incoming = prepareImport(JSON.parse(fs.readFileSync(file, 'utf-8')));
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: 'question',
+      message: T('importModeMessage'),
+      detail: T('importModeDetail'),
+      buttons: [T('importReplace'), T('importAdd'), T('cancel')],
+      defaultId: 1,
+      cancelId: 2
+    });
+    if (response === 2) return { ok: false, canceled: true };
+    const mode = response === 0 ? 'replace' : 'add';
     const prev = getSettings();
-    replaceSettings(next);
+    replaceSettings(applyImport(prev, incoming, mode));
     afterSettingsChange(prev);
-    return { ok: true, ...payload() };
+    logger.log('info', `backup imported (${mode})`, 'backup');
+    return { ok: true, mode, mustRetype: [], ...payload() };
   } catch (err) {
+    logger.log('warn', `backup import refused: ${err.message === 'foreign' ? 'other app' : 'unreadable'}`, 'backup');
     return { ok: false, error: err.message === 'foreign' ? 'foreign' : 'invalid' };
   }
 });
@@ -214,6 +256,7 @@ handle('settings:reset', async () => {
   const prev = getSettings();
   replaceSettings(defaults());
   afterSettingsChange(prev);
+  logger.log('info', 'settings reset to the defaults', 'settings');
   return { ok: true, ...payload() };
 });
 
@@ -227,7 +270,7 @@ handle('programs:export', async () => {
   });
   if (res.canceled || !res.filePath) return { ok: false, canceled: true };
   try {
-    const body = { app: APP_ID, kind: 'programs', exportedAt: new Date().toISOString(), programs: getSettings().programs };
+    const body = { app: APP_SLUG, kind: 'programs', exportedAt: new Date().toISOString(), programs: getSettings().programs };
     fs.writeFileSync(res.filePath, JSON.stringify(body, null, 2), 'utf-8');
     return { ok: true };
   } catch (err) {
@@ -247,7 +290,7 @@ handle('programs:import', async () => {
     const file = res.filePaths[0];
     if (fs.statSync(file).size > 5_000_000) return { ok: false, error: 'invalid' };
     const parsed = JSON.parse(fs.readFileSync(file, 'utf-8'));
-    if (parsed && !Array.isArray(parsed) && parsed.app !== undefined && parsed.app !== APP_ID) return { ok: false, error: 'foreign' };
+    if (parsed && !Array.isArray(parsed) && !isOwnFile(parsed.app)) return { ok: false, error: 'foreign' };
     const incoming = sanitizePrograms(Array.isArray(parsed) ? parsed : parsed?.programs);
     if (!incoming.length) return { ok: false, error: 'invalid' };
     const byId = new Map(getSettings().programs.map((p) => [p.id, p]));
@@ -319,57 +362,184 @@ handle('app:info', () => ({
   name: 'G-Clock',
   version: app.getVersion(),
   electron: process.versions.electron,
-  platform: process.platform
+  platform: process.platform,
+  arch: process.arch
 }));
 
-// ---- updates (guided, like G-Downloader) ---------------------------------------------------
+// Version, system, language, last update check and last error. Never settings values or file names.
+handle('app:support-info', () =>
+  buildSupportInfo({
+    app: 'G-Clock',
+    version: app.getVersion(),
+    electron: process.versions.electron,
+    chrome: process.versions.chrome,
+    platform: process.platform,
+    arch: process.arch,
+    osRelease: os.release(),
+    language: resolveLanguage(),
+    lastCheck: getUpdateState().lastCheck,
+    lastError: logger.entries().filter((e) => e.level === 'error').at(-1),
+    home: os.homedir()
+  }));
+
+handle('logs:open', async () => {
+  fs.mkdirSync(logDir, { recursive: true });
+  const err = await shell.openPath(logDir);
+  return { ok: !err };
+});
+
+// ---- guided update (apps/COMMON-FEATURES.md, section 4) --------------------------------------------------
 
 let lastUpdateInfo = null;
-let downloadedInstaller = null;
+let downloadedInstaller = null; // { version, file }
 let installerDownload = null;
+let downloadAbort = null;
+let startKind = 'same';
 
-async function runUpdateCheck() {
-  const info = await checkForUpdate();
-  if (info.ok) lastUpdateInfo = info;
-  if (info.ok && info.available) send('event:update-available', info);
-  return info;
+const downloadsDir = () => app.getPath('downloads');
+
+// What the page may see of a check: no download URLs, only what it needs to draw the notice.
+const publicInfo = (info) =>
+  info && {
+    ok: info.ok,
+    current: info.current,
+    latest: info.latest,
+    available: !!info.available,
+    url: info.url,
+    notes: info.notes || '',
+    canInstall: !!(info.installer && info.sumsUrl),
+    installerName: info.installer?.name || '',
+    error: info.ok ? '' : String(info.error || '')
+  };
+
+function updateView(info) {
+  const ready = downloadedInstaller && info?.available && downloadedInstaller.version === info.latest && fs.existsSync(downloadedInstaller.file);
+  return {
+    info: publicInfo(info),
+    banner: bannerState(info, getUpdateState()),
+    lastCheck: getUpdateState().lastCheck,
+    downloading: !!installerDownload,
+    downloaded: ready ? path.basename(downloadedInstaller.file) : null
+  };
 }
 
-handle('update:check', () => runUpdateCheck());
+async function runUpdateCheck({ manual = false } = {}) {
+  const info = await checkForUpdate({ current: app.getVersion(), fetchFn: net.fetch });
+  if (info.ok) lastUpdateInfo = info;
+  setUpdateState({ lastCheck: { at: Date.now(), ok: !!info.ok, error: info.ok ? '' : String(info.error || '').slice(0, 200) } });
+  logger.log(info.ok ? 'info' : 'warn', info.ok ? `update check: ${info.available ? `${info.latest} available` : 'up to date'}` : `update check failed: ${info.error}`, 'update');
+  const view = updateView(info);
+  if (!manual && view.banner === 'show') send('event:update-available', view);
+  return view;
+}
+
+handle('update:check', () => runUpdateCheck({ manual: true }));
+handle('update:status', () => updateView(lastUpdateInfo));
 
 handle('update:download', async () => {
   const info = lastUpdateInfo;
   if (!info?.available) return { ok: false, error: 'no-update' };
   if (downloadedInstaller?.version === info.latest && fs.existsSync(downloadedInstaller.file)) return { ok: true, version: info.latest };
-  installerDownload ||= downloadInstaller(info, app.getPath('downloads'), (received, total) => send('event:update-progress', { received, total }))
-    .then((file) => {
-      downloadedInstaller = { version: info.latest, file };
-      return { ok: true, version: info.latest };
+  if (!installerDownload) {
+    // a .part left by a download that was cut off earlier goes first
+    sweepPartials(downloadsDir());
+    downloadAbort = new AbortController();
+    installerDownload = downloadInstaller({
+      info,
+      dir: downloadsDir(),
+      fetchFn: net.fetch,
+      current: app.getVersion(),
+      signal: downloadAbort.signal,
+      onProgress: (received, total) => send('event:update-progress', { received, total })
     })
-    .catch((err) => ({ ok: false, error: err.message }))
-    .finally(() => {
-      installerDownload = null;
-    });
+      .then((file) => {
+        downloadedInstaller = { version: info.latest, file };
+        logger.log('info', `update ${info.latest} downloaded and verified (SHA-256)`, 'update');
+        return { ok: true, version: info.latest };
+      })
+      .catch((err) => {
+        if (!err.cancelled) logger.log('warn', `update download failed: ${err.message}`, 'update');
+        return { ok: false, error: err.message };
+      })
+      .finally(() => {
+        installerDownload = null;
+        downloadAbort = null;
+      });
+  }
   return installerDownload;
 });
 
-handle('update:install', () => {
+handle('update:cancel', () => {
+  downloadAbort?.abort();
+  return true;
+});
+handle('update:remind', () => {
+  setUpdateState(remindLaterState(getUpdateState()));
+  return updateView(lastUpdateInfo);
+});
+handle('update:skip', () => {
+  setUpdateState(skipVersionState(getUpdateState(), lastUpdateInfo?.latest));
+  return updateView(lastUpdateInfo);
+});
+
+// "Close and install": a safety copy of the settings first. The page says if the recording timer is running, and
+// then the user is asked before the app closes (nothing else in G-Clock can be lost by closing it).
+handle('update:install', async (opts) => {
   const d = downloadedInstaller;
   if (!d || !fs.existsSync(d.file)) return { ok: false, error: 'no-installer' };
-  if (process.platform === 'win32') {
-    spawn(d.file, [], { detached: true, stdio: 'ignore' }).unref();
-    setTimeout(() => app.quit(), 500);
-  } else if (process.platform === 'darwin') {
-    shell.openPath(d.file);
-  } else {
-    shell.showItemInFolder(d.file);
+  if (opts?.busy) {
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      message: T('installBusyMessage'),
+      detail: T('installBusyDetail'),
+      buttons: [T('installAnyway'), T('cancel')],
+      defaultId: 1,
+      cancelId: 1
+    });
+    if (response !== 0) return { ok: false, error: 'busy' };
   }
-  return { ok: true };
+  try {
+    makeSafetyCopy({ file: settingsFile(), dir: path.join(app.getPath('userData'), 'backups'), version: lastUpdateInfo?.current || app.getVersion() });
+  } catch (err) {
+    logger.log('error', `safety copy failed: ${err.code || err.message}`, 'update');
+    return { ok: false, error: 'safety-copy' };
+  }
+  const plan = installPlan(process.platform, d.file);
+  logger.log('info', `installing update ${d.version} (${plan.kind})`, 'update');
+  if (plan.kind === 'run-installer') {
+    spawn(plan.file, [], { detached: true, stdio: 'ignore' }).unref();
+    setTimeout(() => app.quit(), 500);
+  } else if (plan.kind === 'open-image') {
+    await shell.openPath(plan.file);
+  } else {
+    shell.showItemInFolder(plan.file);
+  }
+  return { ok: true, hint: plan.hint || '' };
+});
+
+// After an update: the bullets of this version from the bundled CHANGELOG.md, shown once.
+handle('whatsnew:get', () => {
+  if (startKind !== 'updated') return null;
+  try {
+    return whatsNew(fs.readFileSync(path.join(__dirname, 'CHANGELOG.md'), 'utf-8'), app.getVersion());
+  } catch {
+    return null;
+  }
+});
+handle('whatsnew:seen', () => {
+  startKind = 'same';
+  setLastSeenVersion(app.getVersion());
+  return true;
 });
 
 // ---- lifecycle ---------------------------------------------------------------------------
 
 app.whenReady().then(() => {
+  startKind = startupKind(getLastSeenVersion(), app.getVersion(), hadSettingsFile);
+  if (startKind === 'first') setLastSeenVersion(app.getVersion());
+  logger.log('info', `G-Clock ${app.getVersion()} started (${process.platform} ${process.arch}, ${startKind})`, 'app');
+  const stale = sweepPartials(downloadsDir());
+  if (stale.length) logger.log('info', `removed ${stale.length} unfinished installer download(s) left by an earlier run`, 'update');
   lockDownSession();
   buildMenu();
   createWindow();
@@ -382,4 +552,6 @@ app.whenReady().then(() => {
   }
 });
 
+// closing the app in the middle of a download: stop it, so the .part is deleted (what is left is swept at the next start)
+app.on('before-quit', () => downloadAbort?.abort());
 app.on('window-all-closed', () => app.quit());

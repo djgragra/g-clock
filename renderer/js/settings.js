@@ -6,10 +6,10 @@ GC.settingsUI = (() => {
   const { h, $ } = GC;
   const t = (k, p) => GC.t(k, p);
 
-  const SECTIONS = ['general', 'breaks', 'timer', 'news', 'weather', 'buttons', 'data', 'about'];
+  const SECTIONS = ['general', 'breaks', 'events', 'timer', 'news', 'weather', 'buttons', 'updates', 'backup', 'about'];
   let current = 'general';
-  let updateInfo = null;
-  const LIMITS = { feeds: 12, links: 8, places: 4 };
+  let flash = null; // a message to show once when the Backup page is drawn again after an import
+  const LIMITS = { feeds: 12, links: 8, places: 4, grids: 8, events: 20 };
 
   // ---- small builders ----
   const row = (labelKey, control, hintKey) =>
@@ -120,8 +120,116 @@ GC.settingsUI = (() => {
       }), 'breaks.marksHint'),
       m,
       row('breaks.label', text(b.label, (v) => save({ breaks: { label: v } }), { maxLength: 16 })),
-      row('breaks.warn', num(b.warnSec, 10, 1800, (v) => save({ breaks: { warnSec: v } })), 'breaks.warnHint')
+      row('breaks.warn', num(b.warnSec, 10, 1800, (v) => save({ breaks: { warnSec: v } })), 'breaks.warnHint'),
+      schedules()
     );
+  }
+
+  // ---- shared by schedules and events ----
+  const S = () => GC.schedMath;
+  const WEEK = [1, 2, 3, 4, 5, 6, 0]; // Monday first
+  const dayName = (d) => GC.dtf(GC.state.locale, { timeZone: 'UTC', weekday: 'short' }).format(new Date(Date.UTC(2024, 0, 7 + d)));
+
+  // Seven day buttons; at least one day stays on.
+  const dayChips = (days, onChange) => {
+    let now = [...days];
+    return h('div', { class: 'days' }, WEEK.map((d) => {
+      const b = h('button', { class: 'day' + (now.includes(d) ? ' on' : ''), type: 'button', text: dayName(d), 'aria-pressed': String(now.includes(d)) });
+      b.addEventListener('click', () => {
+        const next = now.includes(d) ? now.filter((x) => x !== d) : [...now, d].sort();
+        if (!next.length) return;
+        now = next;
+        for (const [i, x] of WEEK.entries()) {
+          b.parentElement.children[i].classList.toggle('on', now.includes(x));
+          b.parentElement.children[i].setAttribute('aria-pressed', String(now.includes(x)));
+        }
+        onChange(now);
+      });
+      return b;
+    }));
+  };
+
+  // A time field "HH:MM" that says no to anything else and puts the old value back.
+  const timeField = (minutes, onCommit, { allow24 = false } = {}) =>
+    text(S().hhmm(minutes), (v, el) => {
+      const m = S().parseHHMM(v);
+      if (m === null || (m === 1440 && !allow24)) {
+        el.classList.add('err');
+        setTimeout(() => el.classList.remove('err'), 800);
+        el.value = S().hhmm(minutes);
+        return;
+      }
+      onCommit(m);
+    }, { class: 'time', maxLength: 5, placeholder: 'HH:MM', inputMode: 'numeric' });
+
+  // ---- Stopset schedules (other minutes on certain days and hours) ----
+  function schedules() {
+    const grids = () => GC.state.settings.breaks.grids;
+    const write = (next, rebuild = false) => save({ breaks: { grids: next } }, rebuild);
+    const edit = (i, patch, rebuild = false) => write(grids().map((g, j) => (j === i ? { ...g, ...patch } : g)), rebuild);
+    const m = msg();
+    const cards = grids().map((g, i) => {
+      const marksMsg = msg();
+      return h('div', { class: 'card' },
+        h('div', { class: 'card-row' },
+          text(g.name, (v) => edit(i, { name: v }), { maxLength: 24, placeholder: t('sched.name'), class: 'card-name' }),
+          h('div', { class: 'range' }, timeField(g.from, (v) => edit(i, { from: v })), h('span', { class: 'dim', text: t('sched.to') }), timeField(g.to, (v) => edit(i, { to: v }), { allow24: true })),
+          h('button', { class: 'btn small icon', type: 'button', title: t('common.remove'), 'aria-label': t('common.remove'), text: '✕', onclick: () => write(grids().filter((_, j) => j !== i), true) })),
+        dayChips(g.days, (days) => edit(i, { days })),
+        h('div', { class: 'card-row' },
+          h('span', { class: 'field-label', text: t('sched.marks') }),
+          text(g.marks.join(', '), async (v, el) => {
+            const marks = v.split(/[\s,;]+/).filter(Boolean).map(Number);
+            if (marks.some((n) => !Number.isInteger(n) || n < 0 || n > 59)) {
+              say(marksMsg, 'breaks.marksInvalid', 'err');
+              el.value = g.marks.join(', ');
+              return;
+            }
+            say(marksMsg, '');
+            const p = await edit(i, { marks });
+            el.value = p.settings.breaks.grids[i].marks.join(', ');
+          }, { placeholder: '0, 30' })),
+        marksMsg);
+    });
+    return h('div', { class: 'block' },
+      h('h2', { class: 'sub', text: t('sched.title') }),
+      h('p', { class: 'intro', text: t('sched.intro') }),
+      cards.length ? h('div', { class: 'cards' }, cards) : h('p', { class: 'hint', text: t('sched.empty') }),
+      h('div', { class: 'btn-row' }, h('button', { class: 'btn', type: 'button', text: t('sched.add'), onclick: () => {
+        if (grids().length >= LIMITS.grids) return say(m, 'sched.max', 'err', { n: LIMITS.grids });
+        write([...grids(), { name: t('sched.newName', { n: grids().length + 1 }), days: [1, 2, 3, 4, 5], from: 0, to: 1440, marks: [0, 30] }], true);
+      } })),
+      m,
+      h('p', { class: 'hint', text: t('sched.note') }));
+  }
+
+  // ---- Events: fixed times of day with a countdown ----
+  function events(s) {
+    const list = () => GC.state.settings.events.list;
+    const write = (next, rebuild = false) => save({ events: { list: next } }, rebuild);
+    const edit = (i, patch, rebuild = false) => write(list().map((e, j) => (j === i ? { ...e, ...patch } : e)), rebuild);
+    const m = msg();
+    const cards = s.events.list.map((e, i) =>
+      h('div', { class: 'card' },
+        h('div', { class: 'card-row' },
+          check(e.enabled, (v) => edit(i, { enabled: v })),
+          text(e.label, (v) => edit(i, { label: v || t('ev.newLabel') }), { maxLength: 24, placeholder: t('ev.label'), class: 'card-name' }),
+          timeField(e.time, (v) => edit(i, { time: v })),
+          h('button', { class: 'btn small icon', type: 'button', title: t('common.remove'), 'aria-label': t('common.remove'), text: '✕', onclick: () => write(list().filter((_, j) => j !== i), true) })),
+        dayChips(e.days, (days) => edit(i, { days })),
+        h('div', { class: 'card-row' },
+          h('span', { class: 'field-label', text: t('ev.warn') }),
+          num(e.warnSec, 5, 3600, (v) => edit(i, { warnSec: v })),
+          h('span', { class: 'dim', text: t('ev.warnUnit') }))));
+    return section('sec.events', 'ev.intro',
+      row('ev.enabled', check(s.events.enabled, (v) => save({ events: { enabled: v } }))),
+      cards.length ? h('div', { class: 'cards' }, cards) : h('p', { class: 'hint', text: t('ev.empty') }),
+      h('div', { class: 'btn-row' }, h('button', { class: 'btn', type: 'button', text: t('ev.add'), onclick: () => {
+        if (list().length >= LIMITS.events) return say(m, 'ev.max', 'err', { n: LIMITS.events });
+        write([...list(), { label: t('ev.newLabel'), time: 18 * 60, days: [0, 1, 2, 3, 4, 5, 6], warnSec: 60, enabled: true }], true);
+      } })),
+      m,
+      h('p', { class: 'hint', text: t('ev.note') }));
   }
 
   // ---- Timer ----
@@ -285,85 +393,101 @@ GC.settingsUI = (() => {
       m, suggest);
   }
 
-  // ---- Data & updates ----
-  function data(s) {
-    const m = msg();
+  // ---- Updates (the same states as the strip under the header) ----
+  function updates(s) {
     const um = msg();
-    const upd = h('div', { class: 'update-box' });
-    const paintUpdate = () => {
-      upd.replaceChildren();
-      if (!updateInfo) return;
-      if (!updateInfo.ok) return upd.append(h('div', { class: 'msg err', text: t('upd.error') }));
-      if (!updateInfo.available) return upd.append(h('div', { class: 'msg ok', text: t('upd.latest', { v: updateInfo.current }) }));
-      const status = h('div', { class: 'msg', text: t('upd.available', { v: updateInfo.latest }) });
-      upd.append(status);
-      if (!updateInfo.installer || !updateInfo.sumsUrl) {
-        upd.append(h('button', { class: 'btn', type: 'button', text: t('upd.openPage'), onclick: () => window.api.links.open(updateInfo.url) }));
-        return;
-      }
-      const go = h('button', { class: 'btn btn-main', type: 'button', text: t('upd.download') });
-      go.addEventListener('click', async () => {
-        go.disabled = true;
-        status.textContent = t('upd.downloading');
-        const res = await window.api.updates.download();
-        if (!res.ok) {
-          status.textContent = t(res.error === 'checksum-mismatch' ? 'upd.checksum' : 'upd.failed');
-          status.className = 'msg err';
-          go.disabled = false;
-          return;
-        }
-        status.textContent = t('upd.ready');
-        status.className = 'msg ok';
-        go.replaceWith(h('button', { class: 'btn btn-main', type: 'button', text: t(GC.state.platform === 'win32' ? 'upd.install' : 'upd.reveal'), onclick: () => window.api.updates.install() }));
-      });
-      upd.append(go, h('div', { class: 'hint', text: t('upd.unsigned') }));
-    };
-    paintUpdate();
-    return section('sec.data', 'data.intro',
-      h('div', { class: 'btn-row' },
-        h('button', { class: 'btn', type: 'button', text: t('data.export'), onclick: async () => {
-          const r = await window.api.settings.export();
-          if (r.ok) say(m, 'data.exported', 'ok');
-          else if (!r.canceled) say(m, 'data.exportFailed', 'err');
-        } }),
-        h('button', { class: 'btn', type: 'button', text: t('data.import'), onclick: async () => {
-          const r = await window.api.settings.import();
-          if (r.ok) { GC.applySettings(r, { rebuild: true }); }
-          else if (!r.canceled) say(m, r.error === 'foreign' ? 'data.importForeign' : 'data.importInvalid', 'err');
-        } }),
-        h('button', { class: 'btn', type: 'button', text: t('data.reset'), onclick: async () => {
-          const r = await window.api.settings.reset();
-          if (r.ok) GC.applySettings(r, { rebuild: true });
-        } })),
-      m,
-      h('p', { class: 'hint', text: t('data.noCredentials') }),
-      h('h2', { class: 'sub', text: t('upd.title') }),
+    const box = h('div', { class: 'update-box' });
+    GC.updates.mountBox(box);
+    const last = h('div', { class: 'hint', text: GC.updates.lastCheckText() });
+    return section('sec.updates', 'upd.intro',
       row('upd.auto', check(s.checkUpdates, (v) => save({ checkUpdates: v })), 'upd.autoHint'),
       h('div', { class: 'btn-row' }, h('button', { class: 'btn', type: 'button', text: t('upd.check'), onclick: async () => {
         say(um, 'upd.checking', 'dim');
-        updateInfo = await window.api.updates.check();
+        await GC.updates.check();
         say(um, '');
-        paintUpdate();
+        last.textContent = GC.updates.lastCheckText();
       } })),
-      um, upd);
+      last, um, box);
   }
 
-  // ---- About ----
+  // ---- Backup and restore (the same box in every OnAir Garage app) ----
+  function backup() {
+    const m = msg();
+    if (flash) {
+      say(m, flash.key, flash.kind);
+      flash = null;
+    }
+    return section('sec.backup', null,
+      h('h2', { class: 'sub', text: t('bk.title') }),
+      h('p', { class: 'intro', text: t('bk.note') }),
+      h('div', { class: 'btn-row' },
+        h('button', { class: 'btn', type: 'button', text: t('bk.export'), onclick: async () => {
+          const r = await window.api.backup.export();
+          if (r.ok) say(m, 'bk.exported', 'ok');
+          else if (!r.canceled) say(m, 'bk.exportFailed', 'err');
+        } }),
+        h('button', { class: 'btn', type: 'button', text: t('bk.import'), onclick: async () => {
+          const r = await window.api.backup.import();
+          if (r.ok) {
+            flash = { key: r.mode === 'replace' ? 'bk.importedReplace' : 'bk.importedAdd', kind: 'ok' };
+            GC.applySettings(r, { rebuild: true });
+          } else if (!r.canceled) say(m, r.error === 'foreign' ? 'bk.importForeign' : r.error === 'too-large' ? 'bk.importTooLarge' : 'bk.importInvalid', 'err');
+        } })),
+      m,
+      h('p', { class: 'hint', text: t('bk.noSecrets') }),
+      h('h2', { class: 'sub', text: t('bk.resetTitle') }),
+      h('p', { class: 'hint', text: t('bk.resetNote') }),
+      h('div', { class: 'btn-row' }, h('button', { class: 'btn', type: 'button', text: t('data.reset'), onclick: async () => {
+        const r = await window.api.settings.reset();
+        if (r.ok) GC.applySettings(r, { rebuild: true });
+      } })));
+  }
+
+  // ---- Help & About ----
   async function about() {
     const info = await window.api.app.info();
+    const m = msg();
     const link = (url, label) => h('button', { class: 'linkish', type: 'button', text: label, onclick: () => window.api.links.open(url) });
+    const credits = [
+      ['Electron', 'MIT'], ['electron-store', 'MIT'], ['fast-xml-parser', 'MIT'],
+      ['Barlow Condensed, Share Tech Mono', 'SIL OFL 1.1'], ['Open-Meteo.com', 'CC BY 4.0']
+    ];
     return section('sec.about', null,
-      h('div', { class: 'about-name', text: 'G-Clock' }),
-      h('div', { class: 'dim', text: t('about.version', { v: info.version }) }),
+      h('div', { class: 'about-head' }, h('img', { class: 'about-logo', src: 'img/logo.svg', alt: '' }), h('div', {}, h('div', { class: 'about-name', text: 'G-Clock' }), h('div', { class: 'dim', text: t('about.version', { v: info.version }) }))),
       h('p', { text: t('about.desc') }),
       h('dl', { class: 'about-list' },
+        h('dt', { text: t('about.system') }), h('dd', { text: `${info.platform} ${info.arch} · Electron ${info.electron}` }),
         h('dt', { text: t('about.author') }), h('dd', { text: 'Graziano Melzi · OnAir Garage' }),
-        h('dt', { text: t('about.site') }), h('dd', {}, link('https://onairgarage.com', 'onairgarage.com')),
-        h('dt', { text: t('about.contact') }), h('dd', { class: 'mono', text: 'hello@onairgarage.com' }),
         h('dt', { text: t('about.license') }), h('dd', { text: 'MIT · © 2026 Graziano Melzi' }),
-        h('dt', { text: t('about.code') }), h('dd', {}, link('https://github.com/djgragra/g-clock', 'github.com/djgragra/g-clock')),
-        h('dt', { text: t('about.fonts') }), h('dd', { text: 'Barlow Condensed, Share Tech Mono (SIL OFL 1.1)' }),
-        h('dt', { text: t('about.weather') }), h('dd', {}, link('https://open-meteo.com/', 'Open-Meteo.com (CC BY 4.0)'))),
+        h('dt', { text: t('about.links') }), h('dd', { class: 'links' },
+          link('https://onairgarage.com/tools/g-clock/', t('about.toolPage')),
+          link('https://github.com/djgragra/g-clock/releases/latest', t('about.releases')),
+          link('https://github.com/djgragra/g-clock/blob/main/README.md', t('about.manual')),
+          link('https://github.com/djgragra/g-clock', t('about.code'))),
+        h('dt', { text: t('about.contact') }), h('dd', { class: 'mono', text: 'hello@onairgarage.com' })),
+      h('h2', { class: 'sub', text: t('about.credits') }),
+      h('ul', { class: 'howto' }, credits.map(([name, licence]) => h('li', { text: `${name} — ${licence}` }))),
+      h('p', { class: 'hint', text: t('about.privacy') }),
+      h('h2', { class: 'sub', text: t('about.support') }),
+      h('div', { class: 'btn-row' },
+        h('button', { class: 'btn', type: 'button', text: t('about.copySupport'), onclick: async () => {
+          await window.api.clipboard.write(await window.api.app.supportInfo());
+          say(m, 'about.copied', 'ok');
+        } }),
+        h('button', { class: 'btn', type: 'button', text: t('about.openLogs'), onclick: async () => {
+          const r = await window.api.app.openLogs();
+          if (!r.ok) say(m, 'about.logsFailed', 'err');
+        } }),
+        h('button', { class: 'btn', type: 'button', text: t('upd.check'), onclick: async () => {
+          say(m, 'upd.checking', 'dim');
+          await GC.updates.check();
+          const i = GC.updates.hasUpdate();
+          say(m, i ? 'upd.foundSee' : 'upd.uptodate', 'ok');
+        } })),
+      m,
+      h('p', { class: 'hint', text: t('about.supportHint') }),
+      h('h2', { class: 'sub', text: t('about.unsignedTitle') }),
+      h('p', { class: 'hint', text: t('about.unsigned') }),
       h('h2', { class: 'sub', text: t('about.keys') }),
       h('dl', { class: 'about-list' },
         ...[['Space', 'keys.space'], ['N', 'keys.next'], ['R', 'keys.reset'], ['O', 'keys.mode'], ['F / F11', 'keys.fullscreen'], ['S', 'keys.settings'], ['← →', 'keys.news'], ['Esc', 'keys.esc']].flatMap(([k, d]) => [h('dt', { class: 'mono', text: k }), h('dd', { text: t(d) })])));
@@ -374,7 +498,7 @@ GC.settingsUI = (() => {
     const s = GC.state.settings;
     const nav = $('settingsNav');
     nav.replaceChildren(...SECTIONS.map((id) => h('button', { class: 'nav-item' + (id === current ? ' active' : ''), type: 'button', text: t('sec.' + id), onclick: () => { current = id; render(); } })));
-    const builders = { general, breaks, timer, news, weather, buttons, data, about };
+    const builders = { general, breaks, events, timer, news, weather, buttons, updates, backup, about };
     const body = $('settingsContent');
     const scroll = body.scrollTop;
     const content = await builders[current](s);
@@ -400,15 +524,10 @@ GC.settingsUI = (() => {
     $('settings').addEventListener('mousedown', (e) => {
       if (e.target === $('settings')) close();
     });
-    window.api.on.updateProgress(({ received, total }) => {
-      const box = document.querySelector('.update-box .msg');
-      if (box && total) box.textContent = t('upd.downloadingPct', { p: Math.round((received / total) * 100) });
-    });
   }
 
   return {
     init, open, close, render,
-    isOpen: () => !$('settings').hidden,
-    setUpdateInfo: (info) => { updateInfo = info; }
+    isOpen: () => !$('settings').hidden
   };
 })();

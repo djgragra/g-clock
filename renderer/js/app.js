@@ -67,6 +67,7 @@
     if (sec !== lastSecond) {
       lastSecond = sec;
       GC.clock.render(now);
+      GC.updates.syncVisibility(); // the update strip steps aside in full screen and while recording
     }
     GC.timer.render();
   }
@@ -115,11 +116,19 @@
   });
   for (const ev of ['mousemove', 'mousedown', 'touchstart']) document.addEventListener(ev, wake, { passive: true });
 
-  function toast(text, ms = 12000) {
-    const el = $('toast');
-    el.textContent = text;
-    el.hidden = false;
-    setTimeout(() => (el.hidden = true), ms);
+  // ---- what's new: once, after an update (the bullets of this version from CHANGELOG.md) ----
+  async function whatsNew() {
+    const wn = await window.api.whatsNew.get();
+    if (!wn) return;
+    const close = () => {
+      $('newOverlay').hidden = true;
+      window.api.whatsNew.seen();
+    };
+    $('newTitle').textContent = GC.t('new.title', { v: wn.version });
+    $('newList').replaceChildren(...wn.bullets.map((b) => GC.h('li', { text: b.replace(/[*_`]/g, '') })));
+    $('newOverlay').hidden = false;
+    for (const id of ['newOk', 'newClose']) $(id).addEventListener('click', close);
+    $('newOk').focus();
   }
 
   // ---- boot ----
@@ -137,18 +146,18 @@
 
     window.api.on.news((state) => GC.news.update(state));
     window.api.on.weather((state) => GC.weather.update(state));
-    window.api.on.fullscreen((on) => document.body.classList.toggle('fullscreen', on));
-    window.api.on.updateAvailable((info) => {
-      GC.settingsUI.setUpdateInfo(info);
-      $('btnSettings').classList.add('has-update');
-      if (!GC.timer.isBusy()) toast(GC.t('upd.toast', { v: info.latest }));
+    window.api.on.fullscreen((on) => {
+      document.body.classList.toggle('fullscreen', on);
+      GC.updates.syncVisibility();
     });
 
     GC.applySettings(await window.api.settings.get());
     GC.news.update(await window.api.news.get());
     GC.weather.update(await window.api.weather.get());
+    await GC.updates.init();
     setInterval(tick, 100);
     wake();
+    whatsNew();
   }
 
   boot();

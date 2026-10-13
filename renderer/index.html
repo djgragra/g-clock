@@ -15,7 +15,7 @@
     <header>
       <div class="logo-area">
         <img id="logo" alt="" hidden>
-        <div id="brandName" class="logo-text"><span class="t1">STUDIO</span><span class="t2">G-CLOCK</span></div>
+        <div id="brandName" class="brand"><img class="brand-mark" src="img/logo.svg" alt=""><span class="logo-text"><span class="t1">STUDIO</span><span class="t2">G-CLOCK</span></span></div>
       </div>
       <div class="hd"></div>
       <div class="tog">
@@ -24,12 +24,16 @@
       </div>
       <nav id="links" class="studio-btns" aria-label="Links"></nav>
       <div class="hsp"></div>
+      <div id="feedPill" class="pill" role="status" hidden><span class="pill-dot"></span><span id="feedPillText"></span></div>
       <div id="hDate" class="h-date">—</div>
       <div id="hTime" class="h-time">00:00:00</div>
       <div class="hd"></div>
       <button id="btnSettings" class="hbtn" type="button" data-i18n-title="settings.open"><span class="ic ic-gear"></span></button>
       <button id="btnFullscreen" class="hbtn" type="button" data-i18n-title="window.fullscreen"><span class="ic ic-full"></span></button>
     </header>
+
+    <!-- Update notice: a thin strip under the header, never over the dial; hidden while recording and in full screen -->
+    <div id="updateBanner" class="update-banner" role="status" hidden></div>
 
     <!-- MAIN: dial · headlines · weather   (REC: the timer takes the whole area) -->
     <main id="stage" class="main">
@@ -39,6 +43,12 @@
           <span class="cb-dot"></span><span id="clockBadgeText">ON AIR</span>
         </div>
         <svg id="dial" class="dial" viewBox="0 0 700 700" role="img"></svg>
+        <div id="eventBar" class="event-bar" role="status" hidden>
+          <span class="ev-tag" data-i18n="ev.next">NEXT</span>
+          <span id="evLabel" class="ev-label"></span>
+          <span id="evTime" class="ev-time"></span>
+          <span id="evCount" class="ev-count"></span>
+        </div>
       </section>
 
       <div class="vdiv vdiv-news"></div>
@@ -200,8 +210,17 @@
     </div>
   </div>
 
-  <!-- Update notice (quiet) -->
-  <div id="toast" class="toast" role="status" hidden></div>
+  <!-- What's new, once after an update -->
+  <div id="newOverlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="newTitle">
+      <div class="modal-head">
+        <span class="modal-title"><img class="modal-logo" src="img/logo.svg" alt=""><span id="newTitle"></span></span>
+        <button id="newClose" class="modal-x" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body"><ul id="newList" class="new-list"></ul></div>
+      <div class="modal-foot"><div class="mf-sp"></div><button id="newOk" class="mbtn primary" type="button" data-i18n="new.ok">OK</button></div>
+    </div>
+  </div>
 
   <!-- Settings -->
   <div id="settings" class="settings" hidden>
@@ -220,6 +239,7 @@
   <script src="js/i18n.js"></script>
   <script src="js/util.js"></script>
   <script src="js/dialmath.js"></script>
+  <script src="js/schedmath.js"></script>
   <script src="js/timermath.js"></script>
   <script src="js/clock.js"></script>
   <script src="js/timer.js"></script>
@@ -227,6 +247,7 @@
   <script src="js/news.js"></script>
   <script src="js/weather.js"></script>
   <script src="js/links.js"></script>
+  <script src="js/updates.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/app.js"></script>
 </body>

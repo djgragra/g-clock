@@ -6,9 +6,11 @@ contextBridge.exposeInMainWorld('api', {
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     update: (patch) => ipcRenderer.invoke('settings:update', patch),
-    export: () => ipcRenderer.invoke('settings:export'),
-    import: () => ipcRenderer.invoke('settings:import'),
     reset: () => ipcRenderer.invoke('settings:reset')
+  },
+  backup: {
+    export: () => ipcRenderer.invoke('backup:export'),
+    import: () => ipcRenderer.invoke('backup:import')
   },
   programs: {
     export: () => ipcRenderer.invoke('programs:export'),
@@ -35,12 +37,22 @@ contextBridge.exposeInMainWorld('api', {
     open: (url) => ipcRenderer.invoke('links:open', url)
   },
   app: {
-    info: () => ipcRenderer.invoke('app:info')
+    info: () => ipcRenderer.invoke('app:info'),
+    supportInfo: () => ipcRenderer.invoke('app:support-info'),
+    openLogs: () => ipcRenderer.invoke('logs:open')
   },
   updates: {
+    status: () => ipcRenderer.invoke('update:status'),
     check: () => ipcRenderer.invoke('update:check'),
     download: () => ipcRenderer.invoke('update:download'),
-    install: () => ipcRenderer.invoke('update:install')
+    cancel: () => ipcRenderer.invoke('update:cancel'),
+    remind: () => ipcRenderer.invoke('update:remind'),
+    skip: () => ipcRenderer.invoke('update:skip'),
+    install: (opts) => ipcRenderer.invoke('update:install', opts)
+  },
+  whatsNew: {
+    get: () => ipcRenderer.invoke('whatsnew:get'),
+    seen: () => ipcRenderer.invoke('whatsnew:seen')
   },
   on: {
     news: (cb) => ipcRenderer.on('event:news', (_e, data) => cb(data)),

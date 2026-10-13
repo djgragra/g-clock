@@ -1,6 +1,6 @@
 {
   "name": "g-clock",
-  "version": "26.10.2",
+  "version": "26.10.3",
   "description": "Studio clock for radio presenters: 60-minute dial with stopset markers, headlines, weather, recording timer with pre-roll",
   "main": "main.js",
   "type": "module",
@@ -33,6 +33,7 @@
       "src/**/*",
       "renderer/**/*",
       "assets/**/*",
+      "CHANGELOG.md",
       "package.json"
     ],
     "directories": {
@@ -41,18 +42,18 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.ico"
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/icon.png",
+      "icon": "assets/icon.icns",
       "category": "public.app-category.utilities"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "icon": "assets/icon.png",
+      "icon": "assets/linux-icons",
       "category": "AudioVideo"
     },
     "nsis": {
@@ -64,7 +65,14 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "runAfterFinish": true,
-      "shortcutName": "G-Clock"
+      "shortcutName": "G-Clock",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/djgragra/g-clock.git"
   }
 }
