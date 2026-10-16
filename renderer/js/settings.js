@@ -6,7 +6,7 @@ GC.settingsUI = (() => {
   const { h, $ } = GC;
   const t = (k, p) => GC.t(k, p);
 
-  const SECTIONS = ['general', 'breaks', 'events', 'timer', 'news', 'weather', 'buttons', 'updates', 'backup', 'about'];
+  const SECTIONS = ['general', 'breaks', 'events', 'timer', 'talk', 'news', 'weather', 'buttons', 'updates', 'backup', 'about'];
   let current = 'general';
   let flash = null; // a message to show once when the Backup page is drawn again after an import
   const LIMITS = { feeds: 12, links: 8, places: 4, grids: 8, events: 20 };
@@ -497,8 +497,8 @@ GC.settingsUI = (() => {
   async function render() {
     const s = GC.state.settings;
     const nav = $('settingsNav');
-    nav.replaceChildren(...SECTIONS.map((id) => h('button', { class: 'nav-item' + (id === current ? ' active' : ''), type: 'button', text: t('sec.' + id), onclick: () => { current = id; render(); } })));
-    const builders = { general, breaks, events, timer, news, weather, buttons, updates, backup, about };
+    nav.replaceChildren(...SECTIONS.map((id) => h('button', { class: 'nav-item' + (id === current ? ' active' : ''), type: 'button', text: t('sec.' + id), onclick: () => { GC.talkSettings?.close(); current = id; render(); } })));
+    const builders = { general, breaks, events, timer, talk: () => GC.talkSettings.build(), news, weather, buttons, updates, backup, about };
     const body = $('settingsContent');
     const scroll = body.scrollTop;
     const content = await builders[current](s);
@@ -515,6 +515,7 @@ GC.settingsUI = (() => {
   }
 
   function close() {
+    GC.talkSettings?.close();
     $('settings').hidden = true;
     document.body.classList.remove('settings-open');
   }
@@ -527,7 +528,8 @@ GC.settingsUI = (() => {
   }
 
   return {
-    init, open, close, render,
-    isOpen: () => !$('settings').hidden
+    init, open, close, render, save,
+    isOpen: () => !$('settings').hidden,
+    current: () => current
   };
 })();

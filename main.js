@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, clipboard, dialog, ipcMain, net, powerSaveBlocker, screen, session, shell } from 'electron';
+import { app, BrowserWindow, Menu, clipboard, dialog, globalShortcut, ipcMain, net, powerSaveBlocker, screen, session, shell } from 'electron';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { defaults, parseWebUrl, sanitizePrograms, isOwnFile, APP_SLUG, LIMITS, REPO_LINKS, SUGGESTED_FEEDS } from './src/schema.js';
 import {
   getSettings, updateSettings, replaceSettings, getWindowBounds, setWindowBounds, getNewsCache, setNewsCache,
-  getUpdateState, setUpdateState, getLastSeenVersion, setLastSeenVersion, hadSettingsFile, settingsFile
+  getUpdateState, setUpdateState, getLastSeenVersion, setLastSeenVersion, hadSettingsFile, settingsFile, getTalkProgramIndex, setTalkProgramIndex
 } from './src/store.js';
 import { createNews } from './src/feeds.js';
 import { createWeather, geocode } from './src/weather.js';
@@ -19,6 +19,7 @@ import { buildBackup, prepareImport, applyImport, backupFileName, MAX_BACKUP_BYT
 import { createLogger } from './src/logs.js';
 import { buildSupportInfo } from './src/support.js';
 import { resolveLanguage, resolveLocale, T } from './src/i18n.js';
+import { globalAllowed, toElectron, normalizeAccelerator, BINDING_NAMES } from './src/trigger/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -82,7 +83,9 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      webSecurity: true
+      webSecurity: true,
+      // talk timer: MIDI messages and the audio level must keep arriving when the window is hidden or behind another one
+      backgroundThrottling: false
     }
   });
 
@@ -121,10 +124,20 @@ function createWindow() {
   });
 }
 
+// Permissions: none, except for the talk timer once the user switched it on in Settings: MIDI (note, controller and
+// program messages only) and, only to read a level, the audio input. No camera, no screen, no notifications.
 function lockDownSession() {
   const ses = session.defaultSession;
-  ses.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
-  ses.setPermissionCheckHandler(() => false);
+  const ok = (perm, details) => {
+    if (!getSettings().talk.enabled) return false;
+    // Electron asks for 'midiSysex' for every Web MIDI request, even one made with { sysex: false }.
+    // The page never asks for system exclusive access and no code reads such messages.
+    if (perm === 'midi' || perm === 'midiSysex') return true;
+    if (perm === 'media') return !details?.mediaTypes || details.mediaTypes.every((t) => t === 'audio');
+    return false;
+  };
+  ses.setPermissionRequestHandler((_wc, perm, cb, details) => cb(ok(perm, details)));
+  ses.setPermissionCheckHandler((_wc, perm, _origin, details) => ok(perm, details));
   // The page never talks to the network: everything remote goes through the main process.
   // Requests made by the page (they carry a webContentsId) are limited to local content.
   ses.webRequest.onBeforeRequest((details, cb) => {
@@ -149,6 +162,39 @@ function buildMenu() {
   );
 }
 
+// ---- talk timer: global keys ---------------------------------------------------------------
+// A key assigned in Settings → Talk timer is registered with the system when "global" is on and the key is allowed to be
+// global (a modifier, an F key, a numpad or media key). What the system refuses is reported: the page then handles that
+// key only while the window is in front.
+
+let keyStatus = { global: {}, failed: [] };
+let capturing = false;
+
+function applyKeys() {
+  globalShortcut.unregisterAll();
+  const talk = getSettings().talk;
+  const status = { global: {}, failed: [] };
+  if (!capturing && talk.enabled && talk.key.enabled && talk.key.global) {
+    const used = new Set();
+    for (const name of BINDING_NAMES) {
+      const accel = normalizeAccelerator(talk.key.keys[name]);
+      if (!accel || !globalAllowed(accel) || used.has(accel)) continue;
+      used.add(accel);
+      let ok = false;
+      try {
+        ok = globalShortcut.register(toElectron(accel), () => send('event:signal', { source: 'key', accel }));
+      } catch {
+        ok = false;
+      }
+      if (ok) status.global[accel] = true;
+      else status.failed.push(accel);
+    }
+    if (status.failed.length) logger.log('warn', `${status.failed.length} global shortcut(s) refused by the system`, 'talk');
+  }
+  keyStatus = status;
+  send('event:key-status', keyStatus);
+}
+
 // ---- settings side effects ---------------------------------------------------------------
 
 function applyWindowSettings(s) {
@@ -169,9 +215,10 @@ function afterSettingsChange(prev) {
   applyWindowSettings(next);
   if (sig(prev.news) !== sig(next.news)) news.reschedule(sig(prev.news.feeds) !== sig(next.news.feeds) || prev.news.enabled !== next.news.enabled);
   if (sig(prev.weather) !== sig(next.weather)) weather.reschedule(true);
+  if (prev.talk.enabled !== next.talk.enabled || sig(prev.talk.key) !== sig(next.talk.key)) applyKeys();
 }
 
-const payload = () => ({ settings: getSettings(), lang: resolveLanguage(), locale: resolveLocale(), platform: process.platform, suggestedFeeds: SUGGESTED_FEEDS });
+const payload = () => ({ settings: getSettings(), lang: resolveLanguage(), locale: resolveLocale(), platform: process.platform, suggestedFeeds: SUGGESTED_FEEDS, keyStatus, talkProgramIndex: getTalkProgramIndex() });
 
 // ---- IPC ---------------------------------------------------------------------------------
 
@@ -184,6 +231,19 @@ function handle(channel, fn) {
 }
 
 handle('settings:get', () => payload());
+
+// talk timer: global key status, the step each program is at, and the shortcuts released while a new key is chosen
+handle('keys:status', () => keyStatus);
+handle('talk:index-set', (id, index) => {
+  if (typeof id !== 'string' || id.length > 40 || !Number.isInteger(index) || index < 0 || index > 1000) return false;
+  setTalkProgramIndex(id, index);
+  return true;
+});
+handle('keys:capture', (on) => {
+  capturing = !!on;
+  applyKeys();
+  return true;
+});
 
 handle('settings:update', (patch) => {
   const prev = getSettings();
@@ -382,6 +442,13 @@ handle('app:support-info', () =>
     home: os.homedir()
   }));
 
+// The page reports its own events (MIDI input connected, audio permission refused…): fixed messages only, no values.
+handle('app:log', (level, message) => {
+  if (!['info', 'warn', 'error'].includes(level) || typeof message !== 'string') return false;
+  logger.log(level, message.slice(0, 200), 'ui');
+  return true;
+});
+
 handle('logs:open', async () => {
   fs.mkdirSync(logDir, { recursive: true });
   const err = await shell.openPath(logDir);
@@ -544,6 +611,7 @@ app.whenReady().then(() => {
   buildMenu();
   createWindow();
   applyWindowSettings(getSettings());
+  applyKeys();
   news.start();
   weather.start();
   if (getSettings().checkUpdates) {
@@ -554,4 +622,5 @@ app.whenReady().then(() => {
 
 // closing the app in the middle of a download: stop it, so the .part is deleted (what is left is swept at the next start)
 app.on('before-quit', () => downloadAbort?.abort());
+app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => app.quit());

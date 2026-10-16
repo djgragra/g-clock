@@ -17,6 +17,7 @@
     GC.news.configure(s, GC.state.locale);
     GC.weather.configure(s);
     GC.links.configure(s);
+    GC.talk?.configure(s, payload);
     paintBrand(s);
     paintMode(s.airMode);
     lastSecond = -1;

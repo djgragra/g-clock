@@ -110,7 +110,7 @@ GC.updates = (() => {
   const cancel = () => window.api.updates.cancel();
 
   async function install() {
-    const res = await window.api.updates.install({ busy: GC.timer.isBusy() });
+    const res = await window.api.updates.install({ busy: GC.timer.isBusy() || !!GC.talk?.isBusy() });
     if (res.ok) hint = res.hint || '';
     else if (res.error === 'safety-copy' || res.error === 'no-installer') {
       phase = 'error';

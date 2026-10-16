@@ -536,3 +536,85 @@ path.blink { animation: blink-rec 0.9s step-end infinite; }
   .hbtn, .ni, .upd-fill, .pill, .day, .nav-item, .tog-btn { transition: none; }
   .hbtn:hover, .ni:hover { transform: none; }
 }
+
+/* ───── talk timer (Settings → Talk timer): under the dial, a chip in the header while recording ───── */
+:root { --t-normal: var(--fg); --t-warn: var(--amber); --t-over: #ff4d3a; --t-idle: var(--muted); }
+.talk-panel { position: relative; z-index: 1; width: 100%; max-width: 760px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6vh 1.6vw; padding: 0.8vh 1vw; border: 1px solid var(--bdr2); background: var(--bg2); }
+.talk-digits { font: 400 clamp(34px, 8.5vh, 96px) var(--mono); line-height: 1; letter-spacing: 0.02em; color: var(--t-idle); user-select: none; }
+.talk-info { display: flex; flex-direction: column; gap: 0.2vh; min-width: 11em; flex: 1 1 11em; }
+.talk-line { display: flex; align-items: center; gap: 0.8em; flex-wrap: wrap; }
+.talk-state { font: 700 clamp(13px, 2.2vh, 22px) var(--fc); letter-spacing: 0.28em; color: var(--dim); text-transform: uppercase; }
+.talk-step { font: 700 clamp(14px, 2.4vh, 24px) var(--fc); letter-spacing: 0.06em; color: var(--fg); min-height: 1.1em; }
+.talk-next, .talk-nohint { font: 500 clamp(12px, 1.9vh, 18px) var(--fr); color: var(--dim); min-height: 1.1em; }
+.talk-hold { height: 4px; background: transparent; overflow: hidden; }
+.talk-hold-fill { height: 100%; width: 0; background: var(--amber); }
+body.talk-ph-holding .talk-hold { background: var(--bdr2); }
+.talk-ctl { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 0.5vh 10px; align-items: center; justify-content: space-between; }
+.talk-prog { margin-right: auto; }
+.talk-btns { display: flex; gap: 6px; }
+.talk-btn { font: 700 clamp(12px, 1.8vh, 17px) var(--fc); letter-spacing: 0.1em; text-transform: uppercase; padding: 0.3em 0.9em; background: transparent; border: 1px solid var(--line2); color: var(--fg); }
+.talk-btn:hover:not(:disabled) { border-color: var(--fg2); }
+.talk-btn:disabled { opacity: 0.35; cursor: default; }
+.talk-btn.main { background: var(--fg); color: #111; border-color: var(--fg); }
+.talk-select { max-width: 14em; font: 600 clamp(12px, 1.7vh, 16px) var(--fc); letter-spacing: 0.06em; text-transform: uppercase; background: var(--bg3); border: 1px solid var(--bdr2); padding: 3px 6px; color-scheme: dark; }
+.talk-pills { display: inline-flex; gap: 6px; }
+.tpill { display: inline-flex; align-items: center; gap: 5px; font: 600 11px var(--fc); letter-spacing: 0.1em; color: var(--dim); text-transform: uppercase; }
+.tpill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.tpill.ok .tpill-dot { background: var(--green); }
+.tpill.hot .tpill-dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.tpill.warn .tpill-dot { background: var(--amber); }
+.tpill.bad .tpill-dot { background: var(--red); }
+body.talk-ph-running .talk-state { color: var(--green); }
+body.talk-ph-holding .talk-state { color: var(--fg2); }
+body.talk-on:not(.talk-ph-idle) .talk-digits, body.talk-on:not(.talk-ph-idle) .tc-digits { color: var(--t-normal); }
+body.talk-on:not(.talk-ph-idle).talk-lim-warn .talk-digits, body.talk-on:not(.talk-ph-idle).talk-lim-warn .tc-digits { color: var(--t-warn); }
+body.talk-on:not(.talk-ph-idle).talk-lim-over .talk-digits, body.talk-on:not(.talk-ph-idle).talk-lim-flash .talk-digits,
+body.talk-on:not(.talk-ph-idle).talk-lim-over .tc-digits, body.talk-on:not(.talk-ph-idle).talk-lim-flash .tc-digits { color: var(--t-over); }
+body.talk-ph-running.talk-lim-flash .talk-digits, body.talk-ph-running.talk-lim-flash .tc-digits { animation: talk-pulse 1s ease-in-out infinite; }
+@keyframes talk-pulse { 50% { opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) {
+  body.talk-ph-running.talk-lim-flash .talk-digits, body.talk-ph-running.talk-lim-flash .tc-digits { animation: none; }
+  /* no blinking: a steady red frame says the limit is passed by a lot */
+  body.talk-ph-running.talk-lim-flash .talk-panel, body.talk-ph-running.talk-lim-flash .talk-chip { box-shadow: inset 0 0 0 4px var(--t-over); }
+}
+body.fullscreen .talk-ctl, body.fullscreen .talk-pills, body.fullscreen .talk-nohint { display: none; }
+
+.talk-chip { display: inline-flex; align-items: center; gap: 0.6em; padding: 0.15em 0.8em; border: 1px solid var(--line2); background: transparent; }
+.talk-chip:hover { border-color: var(--fg2); }
+.tc-label { font: 700 14px var(--fc); letter-spacing: 0.2em; color: var(--dim); }
+.tc-digits { font: 400 28px var(--mono); color: var(--t-idle); line-height: 1.1; }
+
+/* Settings → Talk timer */
+.talk-card { border: 1px solid var(--line2); background: var(--field); padding: 0.4em 1.2em 1em; margin: 1em 0; }
+.talk-card h3 { font: 700 20px var(--fc); letter-spacing: 0.1em; text-transform: uppercase; margin: 0.6em 0 0.4em; color: var(--fg2); }
+.talk-card .switch { margin: 0.4em 0; }
+.bind { display: grid; grid-template-columns: 9em minmax(0, 1fr) auto auto auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+.bind-name { font-weight: 700; font-size: 16px; }
+.bind-val { font-family: var(--mono); font-size: 15px; }
+.bind-val.empty { color: var(--dim); font-family: var(--fr); }
+.bind-note { grid-column: 2 / -1; font-size: 14px; color: var(--green); }
+.bind-note.warn { color: var(--amber); }
+.bind select.ch { padding: 2px 6px; font-size: 14px; }
+.inline-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.monitor, .ports { margin-top: 12px; }
+.monitor-title { font-weight: 700; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; color: var(--fg2); }
+.talk-card table { border-collapse: collapse; width: 100%; font-size: 13px; font-family: var(--mono); }
+.talk-card th, .talk-card td { text-align: left; padding: 3px 8px; border-bottom: 1px solid var(--line); }
+.talk-card th { color: var(--dim); font-family: var(--fr); font-weight: 600; }
+.talk-card td.act { color: var(--green); font-family: var(--fr); }
+.meter { position: relative; width: min(420px, 100%); height: 14px; border-radius: 99px; background: var(--panel); border: 1px solid var(--line2); overflow: hidden; }
+.meter-fill { height: 100%; width: 0; background: var(--blue); }
+.meter-fill.open { background: var(--green); }
+.meter-mark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--amber); }
+.meter-text { font-family: var(--mono); font-size: 13px; color: var(--fg2); margin-left: 8px; }
+.steps { width: 100%; margin: 0.6em 0; }
+.step-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) 88px 88px 36px 36px 36px; gap: 6px; align-items: center; padding: 4px 0; border-top: 1px solid var(--line); }
+.step-row input[type='text'] { width: 100%; }
+.step-row input[type='number'] { width: 100%; }
+.step-row.head { border-top: 0; font-size: 13px; color: var(--dim); }
+.step-row .btn.small { width: 36px; padding: 0.25em 0; text-align: center; }
+.step-row .idx { color: var(--dim); font-family: var(--mono); font-size: 13px; text-align: right; }
+.step-row.current .idx { color: var(--green); font-weight: 700; }
+.color-row { display: grid; grid-template-columns: 11em auto auto 1fr; gap: 10px; align-items: center; padding: 5px 0; border-top: 1px solid var(--line); }
+.color-row input[type='color'] { width: 44px; height: 28px; padding: 0; border: 1px solid var(--line2); background: var(--field); }
+.swatch { font: 400 24px var(--mono); }

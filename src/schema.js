@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { defaultsTalk, sanitizeTalk } from './talk.js';
 
 // Settings model, defaults and validation. Pure code (no Electron), so it can be unit tested.
 // Everything that comes from the renderer or from an imported JSON file goes through
@@ -76,6 +77,8 @@ export function defaults() {
     },
     weather: { enabled: false, unit: 'c', places: [] },
     links: [],
+    theme: 'dark', // dark | light | system
+    talk: defaultsTalk(), // the talk timer (the MicTime timer inside G-Clock): off until switched on in Settings
     checkUpdates: true
   };
 }
@@ -201,6 +204,8 @@ const SANITIZERS = {
   keepAwake: (v, cur) => bool(v, cur),
   airMode: (v, cur) => oneOf(v, ['onair', 'rec'], cur),
   checkUpdates: (v, cur) => bool(v, cur),
+  theme: (v, cur) => oneOf(v, ['dark', 'light', 'system'], cur),
+  talk: (v, cur) => (v && typeof v === 'object' ? sanitizeTalk(v, cur) : cur),
 
   logo: (v, cur) => {
     if (v === null) return null;
