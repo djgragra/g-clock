@@ -24,6 +24,7 @@
       </div>
       <nav id="links" class="studio-btns" aria-label="Links"></nav>
       <div class="hsp"></div>
+      <button id="talkChip" class="talk-chip" type="button" hidden><span id="talkChipState" class="tc-label">MICTIME</span><span id="talkChipDigits" class="tc-digits">00:00</span></button>
       <div id="feedPill" class="pill" role="status" hidden><span class="pill-dot"></span><span id="feedPillText"></span></div>
       <div id="hDate" class="h-date">—</div>
       <div id="hTime" class="h-time">00:00:00</div>
@@ -43,6 +44,30 @@
           <span class="cb-dot"></span><span id="clockBadgeText">ON AIR</span>
         </div>
         <svg id="dial" class="dial" viewBox="0 0 700 700" role="img"></svg>
+        <!-- MicTime (Settings → MicTime): under the dial; while recording it becomes a chip in the header -->
+        <section id="talkPanel" class="talk-panel" aria-label="MicTime" hidden>
+          <div id="talkDigits" class="talk-digits" role="timer" aria-live="off">00:00</div>
+          <div class="talk-info">
+            <div class="talk-line"><span id="talkState" class="talk-state">READY</span><span id="talkPills" class="talk-pills" role="status"></span></div>
+            <div id="talkStep" class="talk-step"></div>
+            <div id="talkNext" class="talk-next"></div>
+            <div class="talk-hold"><div id="talkHold" class="talk-hold-fill"></div></div>
+            <div id="talkHint" class="talk-nohint" hidden></div>
+          </div>
+          <div class="talk-ctl">
+            <span id="talkProgramWrap" class="talk-prog" hidden><select id="talkProgram" class="talk-select" aria-label="Program"></select></span>
+            <span class="talk-btns">
+              <button id="talkPrev" class="talk-btn" type="button" data-i18n-title="talk.prog.prev">‹</button>
+              <button id="talkNextBtn" class="talk-btn" type="button" data-i18n-title="talk.prog.next">›</button>
+              <button id="talkRestart" class="talk-btn" type="button" data-i18n-title="talk.prog.restart">↺</button>
+            </span>
+            <span class="talk-btns">
+              <button id="talkStart" class="talk-btn main" type="button">START / STOP</button>
+              <button id="talkStop" class="talk-btn" type="button" data-i18n="talk.ctl.stop" hidden>STOP</button>
+              <button id="talkReset" class="talk-btn" type="button" data-i18n="talk.ctl.reset">RESET</button>
+            </span>
+          </div>
+        </section>
         <div id="eventBar" class="event-bar" role="status" hidden>
           <span class="ev-tag" data-i18n="ev.next">NEXT</span>
           <span id="evLabel" class="ev-label"></span>
@@ -237,6 +262,7 @@
   </div>
 
   <script src="js/i18n.js"></script>
+  <script src="js/i18n-talk.js"></script>
   <script src="js/util.js"></script>
   <script src="js/dialmath.js"></script>
   <script src="js/schedmath.js"></script>
@@ -249,6 +275,8 @@
   <script src="js/links.js"></script>
   <script src="js/updates.js"></script>
   <script src="js/settings.js"></script>
+  <script type="module" src="js/talk-settings.js"></script>
+  <script type="module" src="js/talk.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

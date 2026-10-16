@@ -39,6 +39,7 @@ export function missingItems(current, incoming) {
     news: { feeds: add(current.news.feeds, incoming.news.feeds) },
     weather: { places: add(current.weather.places, incoming.weather.places) },
     events: { list: add(current.events.list, incoming.events.list) },
+    talk: { programs: add(current.talk.programs, incoming.talk.programs) },
     breaks: { grids: add(current.breaks.grids, incoming.breaks.grids) }
   };
 }

@@ -1,5 +1,17 @@
 # Changelog
 
+## 26.10.4 — 2026-10-16
+
+- **MicTime** (Settings → MicTime, **off by default**): the timer of the [MicTime](https://onairgarage.com/tools/mictime/) app, with the same options, inside G-Clock. The first signal starts the count, the next one stops it, the total stays on screen for a few seconds (or until the next start) and the timer returns to zero. It appears under the dial and, while recording, as a chip in the header. While it is off nothing is listened to: no MIDI, no key, no microphone, and the system permissions are refused.
+- **Three kinds of signal**: a **MIDI message** (choose the input; start, stop, reset, next step, previous step and restart on a note, a controller or a program change, with MIDI learn and a monitor of the incoming messages), a **key** you choose (global, working with another program in front where the system allows it, or with the window in front) and the **level of an audio input** (threshold and hold time; only the level is measured, nothing is recorded; off by default). One signal for start and stop, or two. The MIDI message format and connection examples are in the MicTime MIDI specification.
+- **Time limits, programs and colours**: a program is a list of steps with a name and a limit (for example Opening 00:45, News 01:00, Interview 03:00), and after every speech the next step is armed by itself; or a single time limit. The figures are grey at zero, change to a warning colour before the limit, to red past it and blink slowly when it is passed by a lot (a steady red frame with "reduce motion"). The four colours can be chosen.
+- **Light theme** (Settings → General → Theme): dark (default), light or follow the system.
+- **Backup** carries the MicTime settings too (MIDI messages, keys, audio and timer settings, programs, colours); *Add only the missing* adds the talk programs you do not have yet. Nothing about passwords: G-Clock still has none.
+- The *Close and install* question now also covers a talk-timer count in progress.
+- The signal code (`src/trigger`) is shared with the MicTime app; settings, texts and the end-to-end run are G-Clock's own.
+- Thanks to Emanuele, who suggested the idea that became MicTime, first as its own app and now inside G-Clock.
+- Tests: 135 (new ones for the MicTime settings, the signal code shared with MicTime, the limit colours, the backup, the theme and the texts in English/Italian/Spanish), plus an end-to-end run on the real app (`dev/e2e-talk.mjs`).
+
 ## 26.10.3 — 2026-10-13
 
 - **Fixed events**: events at a time of day (news at 18:00, ad block at 18:20, a guest on air), each on the days you choose. Under the dial the clock shows the next one with a countdown, warns you once (the bar turns red at the number of seconds you set for that event, 60 by default) and says NOW for ten seconds when it is time. Settings → Events. Times are wall-clock times in the clock's time zone.

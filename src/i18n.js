@@ -14,11 +14,11 @@ const TEXT = {
   },
   importReplace: { en: 'Replace everything', it: 'Sostituisci tutto', es: 'Reemplazar todo' },
   importAdd: { en: 'Add only the missing', it: 'Aggiungi solo i mancanti', es: 'Añadir solo los que faltan' },
-  installBusyMessage: { en: 'The recording timer is running.', it: 'Il timer di registrazione è in corso.', es: 'El temporizador de grabación está en marcha.' },
+  installBusyMessage: { en: 'A timer is running.', it: 'Un timer è in corso.', es: 'Un temporizador está en marcha.' },
   installBusyDetail: {
-    en: 'Closing G-Clock to install the update stops the timer and loses the take in progress.',
-    it: 'Chiudere G-Clock per installare l\'aggiornamento ferma il timer e perde la ripresa in corso.',
-    es: 'Cerrar G-Clock para instalar la actualización detiene el temporizador y pierde la toma en curso.'
+    en: 'Closing G-Clock to install the update stops the timer and loses the take or the count in progress.',
+    it: 'Chiudere G-Clock per installare l\'aggiornamento ferma il timer e perde la ripresa o il conteggio in corso.',
+    es: 'Cerrar G-Clock para instalar la actualización detiene el temporizador y pierde la toma o la cuenta en curso.'
   },
   installAnyway: { en: 'Close and install', it: 'Chiudi e installa', es: 'Cerrar e instalar' },
   programsExportTitle: { en: 'Export programs', it: 'Esporta programmi', es: 'Exportar programas' },

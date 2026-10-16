@@ -36,7 +36,16 @@ contextBridge.exposeInMainWorld('api', {
   links: {
     open: (url) => ipcRenderer.invoke('links:open', url)
   },
+  keys: {
+    status: () => ipcRenderer.invoke('keys:status'),
+    // lets the main process stop the global shortcuts while the user is choosing a new key
+    capture: (on) => ipcRenderer.invoke('keys:capture', !!on)
+  },
+  talk: {
+    setProgramIndex: (id, index) => ipcRenderer.invoke('talk:index-set', id, index)
+  },
   app: {
+    log: (level, message) => ipcRenderer.invoke('app:log', level, message),
     info: () => ipcRenderer.invoke('app:info'),
     supportInfo: () => ipcRenderer.invoke('app:support-info'),
     openLogs: () => ipcRenderer.invoke('logs:open')
@@ -57,6 +66,8 @@ contextBridge.exposeInMainWorld('api', {
   on: {
     news: (cb) => ipcRenderer.on('event:news', (_e, data) => cb(data)),
     weather: (cb) => ipcRenderer.on('event:weather', (_e, data) => cb(data)),
+    signal: (cb) => ipcRenderer.on('event:signal', (_e, data) => cb(data)),
+    keyStatus: (cb) => ipcRenderer.on('event:key-status', (_e, data) => cb(data)),
     fullscreen: (cb) => ipcRenderer.on('event:fullscreen', (_e, on) => cb(on)),
     updateAvailable: (cb) => ipcRenderer.on('event:update-available', (_e, data) => cb(data)),
     updateProgress: (cb) => ipcRenderer.on('event:update-progress', (_e, data) => cb(data))
