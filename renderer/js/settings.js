@@ -84,6 +84,7 @@ GC.settingsUI = (() => {
 
     return section('sec.general', null,
       row('general.language', select([['auto', t('general.langAuto')], ['en', 'English'], ['it', 'Italiano'], ['es', 'Español']], s.language, (v) => save({ language: v }, true))),
+      row('general.theme', select([['dark', t('general.themeDark')], ['light', t('general.themeLight')], ['system', t('general.themeSystem')]], s.theme, (v) => save({ theme: v }, true))),
       row('general.hourFormat', select([['24', t('general.h24')], ['12', t('general.h12')]], s.hour12 ? '12' : '24', (v) => save({ hour12: v === '12' }))),
       row('general.seconds', check(s.showSeconds, (v) => save({ showSeconds: v }))),
       row('general.timezone', h('div', {}, tzInput, h('datalist', { id: 'tzList' }, zones.map((z) => h('option', { value: z })))), 'general.timezoneHint'),

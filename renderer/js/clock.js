@@ -20,7 +20,6 @@ GC.clock = (() => {
   const GAP = 0.016;
   const NOW_SECONDS = 10; // how long "NOW" shows at the start of a stopset minute
 
-  const DIM = 'rgba(100,130,180,0.13)';
   const RED = '#e84a2b';
   const MARK_BLUE = '#3b82f6';
 
@@ -69,18 +68,19 @@ GC.clock = (() => {
         segs.push(null);
         continue;
       }
-      const p = make('path', { d: M.arc(C, C, R_IN, R_OUT, M.angle(i) + GAP, M.angle(i + 1) - GAP), fill: DIM });
+      const p = make('path', { d: M.arc(C, C, R_IN, R_OUT, M.angle(i) + GAP, M.angle(i + 1) - GAP), class: 'dial-seg' });
       ring.append(p);
       segs.push(p);
     }
-    sweep = make('path', { d: '', fill: '#fff' });
+    sweep = make('path', { d: '' });
     ring.append(sweep);
     svg.append(ring);
 
     for (const m of marks) {
       const path = make('path', { d: M.arc(C, C, RM_IN, RM_OUT, M.angle(m) + GAP / 2, M.angle(m + 1) - GAP / 2), fill: MARK_BLUE });
       const mid = M.angle(m) + M.SEG / 2;
-      const label = make('text', { class: 'dial-mark', x: (C + LABEL_R * Math.cos(mid)).toFixed(1), y: (C + LABEL_R * Math.sin(mid)).toFixed(1), 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: '#60a5fa' });
+      const label = make('text', { class: 'dial-mark', x: (C + LABEL_R * Math.cos(mid)).toFixed(1), y: (C + LABEL_R * Math.sin(mid)).toFixed(1), 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+    label.style.fill = 'var(--mark-up)';
       label.textContent = ':' + GC.pad(m);
       svg.append(path, label);
       markers.push({ m, path, label, state: '' });
@@ -179,7 +179,12 @@ GC.clock = (() => {
     // ring: whole minutes behind us
     if (last.minute !== minute) {
       last.minute = minute;
-      for (let i = 0; i < 60; i++) if (segs[i]) segs[i].setAttribute('fill', i < minute ? M.colorFP((i + 1) / 60) : DIM);
+      for (let i = 0; i < 60; i++) {
+        if (!segs[i]) continue;
+        // the minutes behind us have their colour; the others keep the dim colour of the theme (class dial-seg)
+        if (i < minute) segs[i].style.fill = M.colorFP((i + 1) / 60);
+        else segs[i].style.removeProperty('fill');
+      }
     }
     // the current minute fills second by second
     if (last.sweep !== sec) {
@@ -202,7 +207,7 @@ GC.clock = (() => {
       const fill = state === 'passed' ? M.colorFP((mk.m + 1) / 60) : state === 'upcoming' ? MARK_BLUE : RED;
       mk.path.setAttribute('fill', fill);
       mk.path.setAttribute('opacity', key === 'activeb' ? '0.3' : '1');
-      mk.label.setAttribute('fill', state === 'upcoming' ? '#60a5fa' : state === 'passed' ? 'rgba(160,180,204,0.55)' : '#ff6b35');
+      mk.label.style.fill = state === 'upcoming' ? 'var(--mark-up)' : state === 'passed' ? 'var(--mark-past)' : '#ff6b35';
     }
 
     // centre: date, time, countdown

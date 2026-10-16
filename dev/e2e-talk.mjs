@@ -203,6 +203,19 @@ try {
   check('Spanish applies to the talk timer', (await text('talkReset')) === 'REINICIAR', await text('talkReset'));
   await ev(`GC.settingsUI.save({ language: 'en' }).then(() => 1)`);
 
+  // ---- theme: dark, light, follow the system ----
+  check('the theme is dark by default', (await ev('document.documentElement.dataset.theme')) === 'dark' && (await ev('GC.state.settings.theme')) === 'dark');
+  await ev(`GC.settingsUI.save({ theme: 'light' }).then(() => 1)`);
+  check('light theme: light background, dark text', (await ev('document.documentElement.dataset.theme')) === 'light' && (await ev("getComputedStyle(document.body).backgroundColor")) === 'rgb(238, 242, 248)' && (await ev("getComputedStyle(document.getElementById('hTime')).color")) !== 'rgb(255, 255, 255)');
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
+  await ev(`GC.settingsUI.save({ theme: 'system' }).then(() => 1)`);
+  check('follow the system: light when the system is light', (await ev('document.documentElement.dataset.theme')) === 'light');
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] });
+  await sleep(300);
+  check('follow the system: it changes with the system', (await ev('document.documentElement.dataset.theme')) === 'dark');
+  await send('Emulation.setEmulatedMedia', { features: [] });
+  await ev(`GC.settingsUI.save({ theme: 'dark' }).then(() => 1)`);
+
   check('no errors in the console during the run', !errors.length, errors.join(' | '));
 } catch (err) {
   console.log('FAIL', err.message);

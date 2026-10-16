@@ -12,6 +12,7 @@
     GC.state = { ...GC.state, ...payload };
     const s = GC.state.settings;
     GC.setLanguage(GC.state.lang);
+    applyTheme(s.theme);
     GC.clock.configure(s, GC.state.locale);
     GC.timer.configure(s.timer);
     GC.news.configure(s, GC.state.locale);
@@ -24,6 +25,15 @@
     tick();
     if (rebuild && GC.settingsUI.isOpen()) GC.settingsUI.render();
   };
+
+  // ---- theme: dark, light or follow the system ----
+  const lightQuery = matchMedia('(prefers-color-scheme: light)');
+  function applyTheme(theme) {
+    const resolved = theme === 'system' ? (lightQuery.matches ? 'light' : 'dark') : theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = resolved;
+    GC.talk?.redraw();
+  }
+  lightQuery.addEventListener('change', () => { if (GC.state.settings?.theme === 'system') applyTheme('system'); });
 
   function paintBrand(s) {
     const logo = $('logo');
