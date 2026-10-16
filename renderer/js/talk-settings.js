@@ -1,4 +1,4 @@
-// Settings → Talk timer: the switch, the timer, programs with time limits, colours and the signals (MIDI, keys, audio level).
+// Settings → MicTime: the switch, the timer, programs with time limits, colours and the signals (MIDI, keys, audio level).
 // Same options as the MicTime app. Built with the same small helpers as the other pages of the settings panel.
 import { bindingLabel, acceleratorFromEvent, globalAllowed } from '../../src/trigger/index.js';
 

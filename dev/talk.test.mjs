@@ -4,8 +4,8 @@ import { defaults, sanitizeSettings } from '../src/schema.js';
 import { defaultsTalk, sanitizeTalk, sanitizeTalkPrograms } from '../src/talk.js';
 import { buildBackup, prepareImport, applyImport } from '../src/backup.js';
 
-// the talk timer is the MicTime timer inside G-Clock: same options, same limits, off until switched on
-test('defaults: the talk timer is OFF, nothing assigned, no program, hold 5 s, warning 10 s, blink 10 s', () => {
+// MicTime is the MicTime timer inside G-Clock: same options, same limits, off until switched on
+test('defaults: MicTime is OFF, nothing assigned, no program, hold 5 s, warning 10 s, blink 10 s', () => {
   const d = defaultsTalk();
   assert.equal(d.enabled, false);
   assert.equal(d.mode, 'toggle');
@@ -116,7 +116,7 @@ const withTalk = () => sanitizeSettings({
   }
 });
 
-test('the backup carries the talk timer and imports it back; the step a program is at is not part of it', () => {
+test('the backup carries MicTime and imports it back; the step a program is at is not part of it', () => {
   const s = withTalk();
   const file = JSON.parse(JSON.stringify(buildBackup(s)));
   assert.equal(file.includesSecrets, false);
@@ -137,7 +137,7 @@ test('"add only the missing": the talk programs this computer lacks are added, s
   assert.equal(merged.talk.midi.bindings.start, null);
 });
 
-test('replacing everything brings the talk timer of the file', () => {
+test('replacing everything brings MicTime of the file', () => {
   const merged = applyImport(defaults(), withTalk(), 'replace');
   assert.equal(merged.talk.enabled, true);
   assert.equal(merged.talk.mode, 'separate');

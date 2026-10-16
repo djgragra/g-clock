@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// End-to-end check of the talk timer on the REAL app: starts Electron (under Xvfb when there is no display), drives the
+// End-to-end check of MicTime on the REAL app: starts Electron (under Xvfb when there is no display), drives the
 // window over the DevTools protocol and checks that the timer is OFF by default, that it works when switched on (button,
 // MIDI messages injected: there is no MIDI hardware in a test run, keys, the audio gate with Chromium's fake input), the
 // programs, limits and colours, the REC chip and the settings page. Linux only as written.
@@ -24,7 +24,7 @@ try {
   check('page loaded, ES modules ran, no errors', (await ev('typeof GC.talk === "object" && GC.talk.ready === true && typeof GC.talk.signals === "object"')) && !errors.length, errors.join(' | '));
 
   // ---- OFF by default ----
-  check('the talk timer is off by default: nothing on screen', await ev('GC.state.settings.talk.enabled === false && document.getElementById("talkPanel").hidden && document.getElementById("talkChip").hidden'));
+  check('MicTime is off by default: nothing on screen', await ev('GC.state.settings.talk.enabled === false && document.getElementById("talkPanel").hidden && document.getElementById("talkChip").hidden'));
   check('while off nothing is listened to (no MIDI access, no audio)', (await ev('GC.talk.signals.midi.access === null')) && (await ev('GC.talk.signals.audio.status')) === 'off');
   check('while off the system refuses MIDI and the microphone', await ev(`navigator.requestMIDIAccess({ sysex: false }).then(() => false, () => true)`));
 
@@ -182,7 +182,7 @@ try {
   await ev(`GC.settingsUI.open('talk')`);
   await sleep(500);
   const names = JSON.parse(await ev(`JSON.stringify([...document.querySelectorAll('.nav-item')].map((b) => b.textContent))`));
-  check('the Talk timer page is in the settings, after Timer', names.indexOf('Talk timer') === names.indexOf('Timer') + 1, names.join('|'));
+  check('MicTime page is in the settings, after Timer', names.indexOf('MicTime') === names.indexOf('Timer') + 1, names.join('|'));
   check('the page shows the options when the timer is on', await ev(`document.querySelectorAll('#settingsContent .talk-card').length >= 3 && document.querySelectorAll('#settingsContent .bind').length >= 10`));
   await talk({ programs: [{ id: 'al', name: 'Align', steps: [{ name: 'One', sec: 60 }] }], activeProgram: 'al' });
   await ev('GC.settingsUI.render().then(() => 1)');
@@ -198,9 +198,9 @@ try {
   // ---- languages ----
   await talk({ enabled: true });
   await ev(`GC.settingsUI.save({ language: 'it' }).then(() => 1)`);
-  check('Italian applies to the talk timer', (await text('talkReset')) === 'AZZERA' && (await text('talkState')) === 'PRONTO', `${await text('talkReset')} ${await text('talkState')}`);
+  check('Italian applies to MicTime', (await text('talkReset')) === 'AZZERA' && (await text('talkState')) === 'PRONTO', `${await text('talkReset')} ${await text('talkState')}`);
   await ev(`GC.settingsUI.save({ language: 'es' }).then(() => 1)`);
-  check('Spanish applies to the talk timer', (await text('talkReset')) === 'REINICIAR', await text('talkReset'));
+  check('Spanish applies to MicTime', (await text('talkReset')) === 'REINICIAR', await text('talkReset'));
   await ev(`GC.settingsUI.save({ language: 'en' }).then(() => 1)`);
 
   // ---- theme: dark, light, follow the system ----

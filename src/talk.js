@@ -1,6 +1,6 @@
-// Talk timer settings (the same timer as the MicTime app). Pure code, unit tested.
+// MicTime settings (the same timer as the MicTime app). Pure code, unit tested.
 // A signal (MIDI, a key or an audio level) starts the count, the next one stops it, the total stays on screen for a few
-// seconds and the timer returns to zero. The whole feature is off until the user switches it on in Settings → Talk timer.
+// seconds and the timer returns to zero. The whole feature is off until the user switches it on in Settings → MicTime.
 import { normalizeBinding, BINDING_NAMES } from './trigger/midi.js';
 import { normalizeAccelerator } from './trigger/keys.js';
 
@@ -21,7 +21,7 @@ export const TALK_LIMITS = {
 
 export function defaultsTalk() {
   return {
-    enabled: false, // the talk timer is an option: nothing is listened to and nothing is shown until it is switched on
+    enabled: false, // MicTime is an option: nothing is listened to and nothing is shown until it is switched on
     mode: 'toggle', // toggle: one signal starts and the next stops | separate: start and stop are different signals
     holdSeconds: 5, // the total stays on screen this long, then back to zero
     holdForever: false, // true: the total stays until the next start or a reset

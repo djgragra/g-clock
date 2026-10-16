@@ -542,7 +542,7 @@ path.blink { animation: blink-rec 0.9s step-end infinite; }
   .hbtn:hover, .ni:hover { transform: none; }
 }
 
-/* ───── talk timer (Settings → Talk timer): under the dial, a chip in the header while recording ───── */
+/* ───── MicTime (Settings → MicTime): under the dial, a chip in the header while recording ───── */
 :root { --t-normal: var(--fg); --t-warn: var(--amber); --t-over: var(--over); --t-idle: var(--muted); }
 .talk-panel { position: relative; z-index: 1; width: 100%; max-width: 760px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6vh 1.6vw; padding: 0.8vh 1vw; border: 1px solid var(--bdr2); background: var(--bg2); }
 .talk-digits { font: 400 clamp(34px, 8.5vh, 96px) var(--mono); line-height: 1; letter-spacing: 0.02em; color: var(--t-idle); user-select: none; }
@@ -589,7 +589,7 @@ body.fullscreen .talk-ctl, body.fullscreen .talk-pills, body.fullscreen .talk-no
 .tc-label { font: 700 14px var(--fc); letter-spacing: 0.2em; color: var(--dim); }
 .tc-digits { font: 400 28px var(--mono); color: var(--t-idle); line-height: 1.1; }
 
-/* Settings → Talk timer */
+/* Settings → MicTime */
 .talk-card { border: 1px solid var(--line2); background: var(--field); padding: 0.4em 1.2em 1em; margin: 1em 0; }
 .talk-card h3 { font: 700 20px var(--fc); letter-spacing: 0.1em; text-transform: uppercase; margin: 0.6em 0 0.4em; color: var(--fg2); }
 .talk-card .switch { margin: 0.4em 0; }

@@ -1,4 +1,4 @@
-// The inputs that start and stop the talk timer: MIDI, keys, audio level. Each one ends in the same call, onAction(action, source).
+// The inputs that start and stop MicTime: MIDI, keys, audio level. Each one ends in the same call, onAction(action, source).
 // The decisions (what a message means, debounce, the gate) are in src/trigger and are unit tested; this file only
 // connects them to the browser APIs (Web MIDI, key events, Web Audio). Same code as the MicTime app.
 import { parseMessage, learnBinding, resolveMidi, acceleratorFromEvent, resolveKey, createGate, rmsDb } from '../../src/trigger/index.js';

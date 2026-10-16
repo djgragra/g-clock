@@ -12,7 +12,7 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.resolve(process.argv[2] || path.join(root, 'docs', 'screenshots'));
 fs.mkdirSync(out, { recursive: true });
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
-// ES modules (the talk timer) are loaded from file:// pages, which plain Chromium only allows with this switch (Electron does not need it)
+// ES modules (MicTime) are loaded from file:// pages, which plain Chromium only allows with this switch (Electron does not need it)
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files'], ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}) });
 
 const place = (id, name, detail, lat, lon) => ({ id, name, detail, lat, lon });
@@ -164,7 +164,7 @@ for (const [section, file] of [['breaks', '03-settings-schedules.png'], ['events
 }
 // 5. what's new
 {
-  const s = await open({ time: '2026-10-13T12:10:00+02:00', settings: demoSettings(), whatsnew: { version: '26.10.4', date: '2026-10-16', bullets: ['**Talk timer**: a MIDI message, a key or an audio level starts and stops it', 'Light theme'] } });
+  const s = await open({ time: '2026-10-13T12:10:00+02:00', settings: demoSettings(), whatsnew: { version: '26.10.4', date: '2026-10-16', bullets: ['**MicTime**: a MIDI message, a key or an audio level starts and stops it', 'Light theme'] } });
   check(await s.page.locator('#newOverlay:not([hidden])').count() === 1, "what's new window visible");
   await s.ctx.close();
 }
@@ -175,7 +175,7 @@ for (const [section, file] of [['breaks', '03-settings-schedules.png'], ['events
   await shot(s.page, '_welcome.png');
   await s.ctx.close();
 }
-// 7. talk timer: counting a speech near its limit (the time is moved forward 41 s), the settings page, the light theme
+// 7. MicTime: counting a speech near its limit (the time is moved forward 41 s), the settings page, the light theme
 const talkSettings = () => sanitizeSettings({
   talk: {
     enabled: true, programs: [{ id: 'show', name: 'Morning show', steps: [{ name: 'Opening', sec: 45 }, { name: 'News', sec: 60 }, { name: 'Interview', sec: 180 }] }], activeProgram: 'show',
@@ -189,20 +189,20 @@ const talkSettings = () => sanitizeSettings({
   check((await s.page.locator('#talkStep').textContent()).startsWith('Step 1/3 · Opening'), 'program step on screen');
   await s.page.evaluate(() => { GC.talk.action('toggle', 'shot'); const real = performance.now.bind(performance); performance.now = () => real() + 41000; }); // the count is moved forward 41 s
   await s.page.waitForTimeout(400);
-  check((await s.page.locator('#talkDigits').textContent()) === '00:41', 'talk timer counts 00:41');
+  check((await s.page.locator('#talkDigits').textContent()) === '00:41', 'MicTime counts 00:41');
   check((await s.page.evaluate(() => document.body.className)).includes('talk-lim-warn'), 'warning colour near the limit');
-  await shot(s.page, '06-talk-timer.png');
-  check(s.errors.length === 0, 'page errors in the talk timer: ' + s.errors.join(' | '));
+  await shot(s.page, '06-mictime.png');
+  check(s.errors.length === 0, 'page errors in MicTime: ' + s.errors.join(' | '));
   await s.ctx.close();
 }
 {
   const s = await open({ time: '2026-10-13T17:57:40+02:00', settings: talkSettings() });
   await s.page.keyboard.press('s');
-  await s.page.locator('#settingsNav .nav-item', { hasText: 'Talk timer' }).click();
+  await s.page.locator('#settingsNav .nav-item', { hasText: 'MicTime' }).click();
   await s.page.waitForTimeout(300);
   await s.page.locator('#settingsContent').evaluate((el) => (el.scrollTop = el.scrollHeight * 0.55));
   await s.page.waitForTimeout(200);
-  await shot(s.page, '07-settings-talk.png');
+  await shot(s.page, '07-settings-mictime.png');
   check(await s.page.locator('#settingsContent .talk-card').count() === 3, 'three signal cards (MIDI, keyboard, audio)');
   check(s.errors.length === 0, 'page errors in the talk settings: ' + s.errors.join(' | '));
   await s.ctx.close();

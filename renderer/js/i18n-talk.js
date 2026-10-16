@@ -1,4 +1,4 @@
-// Talk timer texts (the same wording as the MicTime app, keys prefixed with "talk."). Merged into GC.DICT.
+// MicTime texts (the same wording as the MicTime app, keys prefixed with "talk."). Merged into GC.DICT.
 (() => {
   const extra = {
     en: {
@@ -9,7 +9,7 @@
       "talk.ctl.toggle": "START / STOP",
       "talk.ctl.stop": "STOP",
       "talk.ctl.reset": "RESET",
-      "talk.hint.noSignal": "No signal assigned yet. Open Settings → Talk timer to choose a MIDI message, a key or an audio input.",
+      "talk.hint.noSignal": "No signal assigned yet. Open Settings → MicTime to choose a MIDI message, a key or an audio input.",
       "talk.pill.key": "KEY",
       "talk.pill.audio": "AUDIO",
       "talk.sig.off": "off",
@@ -151,19 +151,19 @@
       "talk.midi.colState": "State",
       "talk.midi.colConn": "Connection",
       "talk.midi.portsHint": "If a port is not listed, or nothing arrives while the sender shows activity, remove and recreate the virtual port (for example in loopMIDI), then press Refresh.",
-      "talk.sec": "Talk timer",
-      "sec.talk": "Talk timer",
-      "talk.label": "TALK",
+      "talk.sec": "MicTime",
+      "sec.talk": "MicTime",
+      "talk.label": "MICTIME",
       "talk.common.clear": "Clear",
-      "talk.intro": "A timer for speeches on the air. A signal (a MIDI message, a key or the level of an audio input) starts the count, the next one stops it, the total stays on screen for a few seconds and the timer returns to zero. It is the same timer as the MicTime app, and it is off until you switch it on here.",
-      "talk.enable": "Use the talk timer",
+      "talk.intro": "MicTime is a timer for speeches on the air. A signal (a MIDI message, a key or the level of an audio input) starts the count, the next one stops it, the total stays on screen for a few seconds and the timer returns to zero. It is the same timer as the MicTime app, and it is off until you switch it on here.",
+      "talk.enable": "Use MicTime",
       "talk.enableHint": "It appears under the dial and, while recording, in the header. While it is off nothing is listened to: no MIDI, no key, no microphone.",
       "talk.subTimer": "Timer",
       "talk.subProgram": "Programs, time limits and colours",
       "talk.subSignals": "Signals",
-      "talk.chipTitle": "Talk timer: click to start or stop",
-      "talk.privacy": "The talk timer reads MIDI, keys and the audio level on this computer only. The audio is never recorded, saved or sent anywhere.",
-      "talk.specHint": "The message format and connection examples are in the MIDI specification of MicTime (the same signals)."
+      "talk.chipTitle": "MicTime: click to start or stop",
+      "talk.privacy": "MicTime reads MIDI, keys and the audio level on this computer only. The audio is never recorded, saved or sent anywhere.",
+      "talk.specHint": "The message format and connection examples are in the MIDI specification of the MicTime app (the same signals)."
     },
     it: {
       "talk.phase.idle": "PRONTO",
@@ -173,7 +173,7 @@
       "talk.ctl.toggle": "AVVIA / FERMA",
       "talk.ctl.stop": "FERMA",
       "talk.ctl.reset": "AZZERA",
-      "talk.hint.noSignal": "Nessun segnale assegnato. Apri Impostazioni → Talk timer per scegliere un messaggio MIDI, un tasto o un ingresso audio.",
+      "talk.hint.noSignal": "Nessun segnale assegnato. Apri Impostazioni → MicTime per scegliere un messaggio MIDI, un tasto o un ingresso audio.",
       "talk.pill.key": "TASTO",
       "talk.pill.audio": "AUDIO",
       "talk.sig.off": "spento",
@@ -315,19 +315,19 @@
       "talk.midi.colState": "Stato",
       "talk.midi.colConn": "Connessione",
       "talk.midi.portsHint": "Se una porta non compare, o non arriva nulla mentre il mittente mostra attività, elimina e ricrea la porta virtuale (per esempio in loopMIDI), poi premi Aggiorna.",
-      "talk.sec": "Talk timer",
-      "sec.talk": "Talk timer",
-      "talk.label": "TALK",
+      "talk.sec": "MicTime",
+      "sec.talk": "MicTime",
+      "talk.label": "MICTIME",
       "talk.common.clear": "Cancella",
-      "talk.intro": "Un cronometro per gli interventi in diretta. Un segnale (un messaggio MIDI, un tasto o il livello di un ingresso audio) avvia il conteggio, il successivo lo ferma, il totale resta a schermo qualche secondo e il timer torna a zero. È lo stesso cronometro dell’app MicTime ed è spento finché non lo accendi qui.",
-      "talk.enable": "Usa il talk timer",
+      "talk.intro": "MicTime è un cronometro per gli interventi in diretta. Un segnale (un messaggio MIDI, un tasto o il livello di un ingresso audio) avvia il conteggio, il successivo lo ferma, il totale resta a schermo qualche secondo e il timer torna a zero. È lo stesso cronometro dell’app MicTime ed è spento finché non lo accendi qui.",
+      "talk.enable": "Usa MicTime",
       "talk.enableHint": "Compare sotto il quadrante e, durante la registrazione, nell’intestazione. Da spento non ascolta nulla: né MIDI, né tasti, né microfono.",
       "talk.subTimer": "Timer",
       "talk.subProgram": "Programmi, limiti di tempo e colori",
       "talk.subSignals": "Segnali",
-      "talk.chipTitle": "Talk timer: clic per avviare o fermare",
-      "talk.privacy": "Il talk timer legge MIDI, tasti e livello audio solo su questo computer. L’audio non viene mai registrato, salvato né inviato altrove.",
-      "talk.specHint": "Il formato dei messaggi e gli esempi di collegamento sono nella specifica MIDI di MicTime (gli stessi segnali)."
+      "talk.chipTitle": "MicTime: clic per avviare o fermare",
+      "talk.privacy": "MicTime legge MIDI, tasti e livello audio solo su questo computer. L’audio non viene mai registrato, salvato né inviato altrove.",
+      "talk.specHint": "Il formato dei messaggi e gli esempi di collegamento sono nella specifica MIDI dell’app MicTime (gli stessi segnali)."
     },
     es: {
       "talk.phase.idle": "LISTO",
@@ -337,7 +337,7 @@
       "talk.ctl.toggle": "INICIAR / PARAR",
       "talk.ctl.stop": "PARAR",
       "talk.ctl.reset": "REINICIAR",
-      "talk.hint.noSignal": "Aún no hay ninguna señal asignada. Abre Ajustes → Talk timer para elegir un mensaje MIDI, una tecla o una entrada de audio.",
+      "talk.hint.noSignal": "Aún no hay ninguna señal asignada. Abre Ajustes → MicTime para elegir un mensaje MIDI, una tecla o una entrada de audio.",
       "talk.pill.key": "TECLA",
       "talk.pill.audio": "AUDIO",
       "talk.sig.off": "apagado",
@@ -479,19 +479,19 @@
       "talk.midi.colState": "Estado",
       "talk.midi.colConn": "Conexión",
       "talk.midi.portsHint": "Si un puerto no aparece, o no llega nada mientras el emisor muestra actividad, elimina y vuelve a crear el puerto virtual (por ejemplo en loopMIDI) y pulsa Actualizar.",
-      "talk.sec": "Talk timer",
-      "sec.talk": "Talk timer",
-      "talk.label": "TALK",
+      "talk.sec": "MicTime",
+      "sec.talk": "MicTime",
+      "talk.label": "MICTIME",
       "talk.common.clear": "Borrar",
-      "talk.intro": "Un cronómetro para las intervenciones en directo. Una señal (un mensaje MIDI, una tecla o el nivel de una entrada de audio) inicia la cuenta, la siguiente la para, el total se queda en pantalla unos segundos y el temporizador vuelve a cero. Es el mismo cronómetro que la app MicTime y está apagado hasta que lo actives aquí.",
-      "talk.enable": "Usar el talk timer",
+      "talk.intro": "MicTime es un cronómetro para las intervenciones en directo. Una señal (un mensaje MIDI, una tecla o el nivel de una entrada de audio) inicia la cuenta, la siguiente la para, el total se queda en pantalla unos segundos y el temporizador vuelve a cero. Es el mismo cronómetro que la app MicTime y está apagado hasta que lo actives aquí.",
+      "talk.enable": "Usar MicTime",
       "talk.enableHint": "Aparece bajo la esfera y, durante la grabación, en la cabecera. Apagado no escucha nada: ni MIDI, ni teclas, ni micrófono.",
       "talk.subTimer": "Temporizador",
       "talk.subProgram": "Programas, límites de tiempo y colores",
       "talk.subSignals": "Señales",
-      "talk.chipTitle": "Talk timer: clic para iniciar o parar",
-      "talk.privacy": "El talk timer lee MIDI, teclas y nivel de audio solo en este equipo. El audio nunca se graba, se guarda ni se envía a ningún sitio.",
-      "talk.specHint": "El formato de los mensajes y los ejemplos de conexión están en la especificación MIDI de MicTime (las mismas señales)."
+      "talk.chipTitle": "MicTime: clic para iniciar o parar",
+      "talk.privacy": "MicTime lee MIDI, teclas y nivel de audio solo en este equipo. El audio nunca se graba, se guarda ni se envía a ningún sitio.",
+      "talk.specHint": "El formato de los mensajes y los ejemplos de conexión están en la especificación MIDI de la app MicTime (las mismas señales)."
     }
   };
   for (const lang of Object.keys(extra)) Object.assign(GC.DICT[lang], extra[lang]);

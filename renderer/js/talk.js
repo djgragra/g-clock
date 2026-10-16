@@ -1,6 +1,6 @@
-// Talk timer: the MicTime timer inside G-Clock. A signal (MIDI, a key, an audio level) starts the count, the next one stops
+// MicTime: the MicTime timer inside G-Clock. A signal (MIDI, a key, an audio level) starts the count, the next one stops
 // it, the total stays on screen for a few seconds and the timer returns to zero. Off until it is switched on in Settings →
-// Talk timer. The timer itself (src/trigger/stopwatch.js) is plain logic; this file draws it. Same behaviour as the app.
+// MicTime. The timer itself (src/trigger/stopwatch.js) is plain logic; this file draws it. Same behaviour as the app.
 import { createStopwatch, formatDuration } from '../../src/trigger/stopwatch.js';
 import { limitState, clampIndex, currentStep, advance, back, stepAfter, stepText } from '../../src/limits.js';
 import { createSignals } from './talk-signals.js';
@@ -34,7 +34,7 @@ const activeStep = () => {
   return talk.limitSeconds > 0 ? { name: '', sec: talk.limitSeconds } : null;
 };
 
-// What the inputs see: nothing is listened to while the talk timer is off.
+// What the inputs see: nothing is listened to while MicTime is off.
 const view = () => ({
   ...talk,
   midi: { ...talk.midi, enabled: talk.enabled && talk.midi.enabled },

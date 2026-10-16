@@ -78,7 +78,7 @@ export function defaults() {
     weather: { enabled: false, unit: 'c', places: [] },
     links: [],
     theme: 'dark', // dark | light | system
-    talk: defaultsTalk(), // the talk timer (the MicTime timer inside G-Clock): off until switched on in Settings
+    talk: defaultsTalk(), // the MicTime timer inside G-Clock: off until switched on in Settings
     checkUpdates: true
   };
 }

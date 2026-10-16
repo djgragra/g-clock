@@ -84,7 +84,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
       webSecurity: true,
-      // talk timer: MIDI messages and the audio level must keep arriving when the window is hidden or behind another one
+      // MicTime: MIDI messages and the audio level must keep arriving when the window is hidden or behind another one
       backgroundThrottling: false
     }
   });
@@ -124,7 +124,7 @@ function createWindow() {
   });
 }
 
-// Permissions: none, except for the talk timer once the user switched it on in Settings: MIDI (note, controller and
+// Permissions: none, except for MicTime once the user switched it on in Settings: MIDI (note, controller and
 // program messages only) and, only to read a level, the audio input. No camera, no screen, no notifications.
 function lockDownSession() {
   const ses = session.defaultSession;
@@ -162,8 +162,8 @@ function buildMenu() {
   );
 }
 
-// ---- talk timer: global keys ---------------------------------------------------------------
-// A key assigned in Settings → Talk timer is registered with the system when "global" is on and the key is allowed to be
+// ---- MicTime: global keys ---------------------------------------------------------------
+// A key assigned in Settings → MicTime is registered with the system when "global" is on and the key is allowed to be
 // global (a modifier, an F key, a numpad or media key). What the system refuses is reported: the page then handles that
 // key only while the window is in front.
 
@@ -232,7 +232,7 @@ function handle(channel, fn) {
 
 handle('settings:get', () => payload());
 
-// talk timer: global key status, the step each program is at, and the shortcuts released while a new key is chosen
+// MicTime: global key status, the step each program is at, and the shortcuts released while a new key is chosen
 handle('keys:status', () => keyStatus);
 handle('talk:index-set', (id, index) => {
   if (typeof id !== 'string' || id.length > 40 || !Number.isInteger(index) || index < 0 || index > 1000) return false;
