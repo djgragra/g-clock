@@ -420,6 +420,15 @@ path.blink { animation: blink-rec 0.9s step-end infinite; }
 .about-list dd { font-size: 18px; overflow-wrap: anywhere; }
 .linkish { background: none; border: 0; color: var(--fg); text-decoration: underline; text-underline-offset: 3px; font-size: 18px; padding: 0; }
 .linkish:hover { color: var(--cherry-hi); }
+/* tip jar card (Help & About): small but visible; the pill is the same cherry in every OnAir Garage app */
+.tip-card { display: flex; align-items: center; gap: 1.1em; margin: 2em 0 0.4em; padding: 0.9em 1.2em; max-width: 44em; background: var(--bg3); border: 1px solid var(--bdr2); border-radius: 14px; }
+.tip-jar { width: 80px; height: auto; flex-shrink: 0; }
+.tip-body { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6em; min-width: 0; }
+.settings .tip-text { margin: 0; font-size: 15px; line-height: 1.35; color: var(--dim); }
+.tip-pill { padding: 0.35em 1.2em; border: 2px solid #fbf4e4; border-radius: 99px; background: #c8232c; color: #fbf4e4; font-family: var(--fc); font-weight: 800; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35); }
+.tip-pill:hover { background: #de2d37; }
+.tip-pill:focus-visible { outline: 3px solid var(--blue2); outline-offset: 3px; }
+:root[data-theme='light'] .tip-pill { border-color: #9c1820; }
 .settings p { margin: 0.6em 0; font-size: 18px; max-width: 44em; line-height: 1.35; }
 .settings p.hint { font-size: 15px; }
 

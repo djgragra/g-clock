@@ -1,5 +1,12 @@
 # Changelog
 
+## 26.10.5 — 2026-10-17
+
+- **Tip jar card** in Settings → Help & About (at the bottom): a small card with the tip jar of the site, one line and a **Tip jar** button (*Salvadanaio*, *Hucha*) that opens the site page in your browser, in the language of the app. It is only there: nothing in the main window, no pop-ups, no reminders, no counters.
+- **Dependencies**: Electron 44.9, electron-store 12 (the settings file is read exactly as before: checked with a file written by the previous version) and the build tools; no known vulnerabilities in what ships with the app.
+- Installers are now built on Node 22.
+- Tests: 136, plus the end-to-end run on the real app.
+
 ## 26.10.4 — 2026-10-16
 
 - **MicTime** (Settings → MicTime, **off by default**): the timer of the [MicTime](https://onairgarage.com/tools/mictime/) app, with the same options, inside G-Clock. The first signal starts the count, the next one stops it, the total stays on screen for a few seconds (or until the next start) and the timer returns to zero. It appears under the dial and, while recording, as a chip in the header. While it is off nothing is listened to: no MIDI, no key, no microphone, and the system permissions are refused.

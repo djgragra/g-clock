@@ -1,6 +1,6 @@
 {
   "name": "g-clock",
-  "version": "26.10.4",
+  "version": "26.10.5",
   "description": "Studio clock for radio presenters: 60-minute dial with stopset markers, headlines, weather, recording timer with pre-roll",
   "main": "main.js",
   "type": "module",
@@ -16,11 +16,11 @@
     "dist:linux": "electron-builder --linux"
   },
   "dependencies": {
-    "electron-store": "^11.0.2",
+    "electron-store": "^12.0.0",
     "fast-xml-parser": "^5.11.2"
   },
   "devDependencies": {
-    "electron": "^44.5.1",
+    "electron": "^44.9.0",
     "electron-builder": "^26.15.3"
   },
   "build": {

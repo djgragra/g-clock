@@ -10,8 +10,16 @@ export const APP_SLUG = 'g-clock'; // the "app" field of a backup file (apps/COM
 export const isOwnFile = (app) => app === undefined || app === APP_SLUG || app === APP_ID;
 export const SETTINGS_VERSION = 1;
 
+// The tip jar page of the site, one address per interface language (Settings → Help & About).
+export const TIP_URLS = {
+  en: 'https://onairgarage.com/support/',
+  it: 'https://onairgarage.com/it/support/',
+  es: 'https://onairgarage.com/es/support/'
+};
+
 // Fixed addresses the app may open in the browser besides the user's own links and headlines.
 export const REPO_LINKS = [
+  ...Object.values(TIP_URLS),
   'https://open-meteo.com/',
   'https://onairgarage.com',
   'https://onairgarage.com/tools/g-clock/',
