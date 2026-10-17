@@ -12,7 +12,7 @@ By Graziano Melzi · [OnAir Garage](https://onairgarage.com) — contact: hello@
 - Author: Graziano Melzi · OnAir Garage · hello@onairgarage.com
 - License: MIT (see `LICENSE`)
 - MIDI specification of the MicTime timer (shared with the MicTime app): [MIDI-SPEC.md](https://github.com/djgragra/mictime/blob/main/docs/MIDI-SPEC.md)
-- Systems: Windows, macOS (Intel and Apple silicon), Linux (AppImage, x64). **What has been run:** the unit tests and an end-to-end run of the real app (Electron under Xvfb) on Linux x64. The MicTime timer is the same code as the MicTime app, which the author tried on Windows (installer, MIDI from virtual ports, a global shortcut with another program in front, programs, colours) and on macOS Intel (MIDI from the IAC Driver). G-Clock 26.10.4 itself has **not** yet been installed and tried by hand on Windows, macOS or a real Linux desktop (see "Not validated").
+- Systems: Windows, macOS (Intel and Apple silicon), Linux (AppImage, x64). **What has been run:** the unit tests and an end-to-end run of the real app (Electron under Xvfb) on Linux x64. The MicTime timer is the same code as the MicTime app, which the author tried on Windows (installer, MIDI from virtual ports, a global shortcut with another program in front, programs, colours) and on macOS Intel (MIDI from the IAC Driver). The author tried G-Clock 26.10.4 by hand on Windows and macOS (his declaration of 17 October 2026, no detail by function); 26.10.5 (dependencies and the tip card) has only had the automated run described above, and no real Linux desktop was used (see "Not validated").
 
 ## What it does
 
@@ -108,13 +108,13 @@ G-Clock looks for a new release once a day (Settings → Updates, can be switche
 
 | Reference | What it validates | Result | How to re-run |
 |---|---|---|---|
-| Unit tests (`dev/*.test.mjs`) | settings validation, schedules and events, backup, guided update with a fake GitHub (hash mismatch, interrupted download, `.part` cleanup, safety copy), logs, support info, feed parsing, dial and timer arithmetic, the MicTime timer (MIDI parsing, learn, matching, toggle / separate / gate rules, keys, the audio gate, the stopwatch, limit colours, programs, settings and backup), the three languages, packaging rules | 135 tests, all pass (Linux, Node 22) | `npm test` |
+| Unit tests (`dev/*.test.mjs`) | settings validation, schedules and events, backup, guided update with a fake GitHub (hash mismatch, interrupted download, `.part` cleanup, safety copy), logs, support info, feed parsing, dial and timer arithmetic, the MicTime timer (MIDI parsing, learn, matching, toggle / separate / gate rules, keys, the audio gate, the stopwatch, limit colours, programs, settings and backup), the three languages, packaging rules | 136 tests, all pass (Linux, Node 22) | `npm test` |
 | End-to-end run of the MicTime timer (`dev/e2e-talk.mjs`) on the real app | off by default (nothing listened to, MIDI and microphone permissions refused), then on: the timer through the button, MIDI messages (injected into the real handler), learn, keys with the window in front, global shortcuts registered and released, programs (steps, loop, free, remembered step), limit colours, blinking and "reduce motion", chosen colours, the audio gate with Chromium's fake audio device, the REC chip, the settings page, languages, dark / light / follow-the-system theme | all checks pass on **Linux x64, Electron under Xvfb** | `npm ci && node dev/e2e-talk.mjs` (needs `xvfb-run` or a display) |
 | Screenshots (`dev/make-screenshots.mjs`) | the interface renders with fictitious data and the checks in the script pass | passes (Chromium, Linux) | `node dev/make-screenshots.mjs` |
 
 ## Not validated
 
-- **26.10.4 by hand**: the light theme, the MicTime timer, MIDI, keys, *Close and install* and the guided update on **Windows, macOS and a real Linux desktop** have not been tried by hand with this version. The timer code is the one of the MicTime app 26.10.1, tried on Windows and macOS Intel, but not inside G-Clock.
+- **By hand**: 26.10.4 was tried by the author on Windows and macOS (declaration of 17 October 2026; which functions exactly was not recorded). Not tried by hand: a real Linux desktop, and **26.10.5** on any system (new Electron and electron-store versions, the tip card).
 - **Audio**: only Chromium's fake input device was used; no real microphone or sound card.
 - **Real MIDI equipment**: MIDI arrived from virtual ports in MicTime app tests; a real console or controller was not used, and the input list on hot-plug is untested.
 - **Updates**: *Close and install* (does the new version start again after the installer on Windows, `runAfterFinish`? the disk image on macOS) needs a second release to try.

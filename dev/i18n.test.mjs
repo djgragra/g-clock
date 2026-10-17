@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { TIP_URLS, REPO_LINKS } from '../src/schema.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'renderer');
 const ctx = vm.createContext({ document: { documentElement: {}, querySelectorAll: () => [] } });
@@ -57,4 +58,21 @@ test('the talk timer texts are all used, none is left over', () => {
   const dynamic = /^talk\.((phase|sig\.name|act|col)\.|midi\.col[A-Z]|audio\.st[A-Z])/;
   const unused = Object.keys(DICT.en).filter((k) => k.startsWith('talk.') && !dynamic.test(k) && !src.includes(`'${k}'`) && !src.includes(`"${k}"`) && !src.includes(`'${k.slice(5)}'`));
   assert.deepEqual(unused, []);
+});
+
+test('tip jar card: text, button and site page in all three languages, the picture is there, only the three support pages are allowed', () => {
+  for (const lang of ['en', 'it', 'es']) {
+    for (const k of ['about.tipText', 'about.tipButton', 'about.tipUrl']) assert.ok(DICT[lang][k]?.trim(), `${lang} ${k}`);
+    assert.equal(DICT[lang]['about.tipUrl'], TIP_URLS[lang], lang);
+  }
+  assert.deepEqual(Object.keys(TIP_URLS).sort(), ['en', 'es', 'it']);
+  assert.equal(DICT.en['about.tipUrl'], 'https://onairgarage.com/support/');
+  assert.equal(DICT.it['about.tipUrl'], 'https://onairgarage.com/it/support/');
+  assert.equal(DICT.es['about.tipUrl'], 'https://onairgarage.com/es/support/');
+  for (const u of Object.values(TIP_URLS)) assert.ok(REPO_LINKS.includes(u), u);
+  // no Stripe or other payment address in the app: the site page is the only door
+  assert.ok(Object.values(DICT).every((d) => !/stripe|ko-fi|paypal/i.test(d['about.tipUrl'])));
+  assert.ok(fs.existsSync(path.join(root, 'img', 'tip-jar.png')));
+  const settingsJs = fs.readFileSync(path.join(root, 'js', 'settings.js'), 'utf-8');
+  assert.equal((settingsJs.match(/tip-card/g) || []).length, 1, 'the card is built in one place only (Help & About)');
 });

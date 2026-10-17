@@ -1,6 +1,6 @@
 {
   "name": "g-clock",
-  "version": "26.10.4",
+  "version": "26.10.5",
   "description": "Studio clock for radio presenters: 60-minute dial with stopset markers, headlines, weather, recording timer with pre-roll",
   "main": "main.js",
   "type": "module",
