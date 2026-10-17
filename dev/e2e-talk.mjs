@@ -5,7 +5,16 @@
 // programs, limits and colours, the REC chip and the settings page. Linux only as written.
 //   node dev/e2e-talk.mjs        needs: npm ci, xvfb-run (or a display)
 // It uses a throw-away profile folder, never the user's settings.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { launch, sleep } from './driver.mjs';
+
+// a stand-in for xdg-open records what the app asks the system to open (no browser is started, the allow-list in main.js still decides)
+const openLog = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gclock-open-')), 'opened.txt');
+const binDir = path.dirname(openLog);
+fs.writeFileSync(path.join(binDir, 'xdg-open'), `#!/bin/sh\necho "$1" >> '${openLog}'\n`, { mode: 0o755 });
+process.env.PATH = `${binDir}:${process.env.PATH}`;
 
 const app = await launch({ extraArgs: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 const { ev, send, errors } = app;
@@ -215,6 +224,26 @@ try {
   check('follow the system: it changes with the system', (await ev('document.documentElement.dataset.theme')) === 'dark');
   await send('Emulation.setEmulatedMedia', { features: [] });
   await ev(`GC.settingsUI.save({ theme: 'dark' }).then(() => 1)`);
+
+  // ---- tip jar: a click on the jar goes where the pill goes (through the bridge and the allow-list, to the system) ----
+  for (const [lang, url] of [['en', 'https://onairgarage.com/support/'], ['it', 'https://onairgarage.com/it/support/'], ['es', 'https://onairgarage.com/es/support/']]) {
+    await ev(`GC.settingsUI.save({ language: '${lang}' }).then(() => 1)`);
+    await ev(`GC.settingsUI.open('about')`);
+    await sleep(500);
+    const read = () => (fs.existsSync(openLog) ? fs.readFileSync(openLog, 'utf-8').split('\n').filter(Boolean) : []);
+    const r = JSON.parse(await ev(`(() => { const jar = document.querySelector('.tip-jar-link'); return JSON.stringify({ aria: jar.getAttribute('aria-hidden'), tab: jar.getAttribute('tabindex'), alt: jar.querySelector('img').getAttribute('alt'), cursor: getComputedStyle(jar).cursor }); })()`));
+    fs.rmSync(openLog, { force: true });
+    await ev(`document.querySelector('.tip-pill').click()`);
+    await sleep(800);
+    const viaPill = read();
+    fs.rmSync(openLog, { force: true });
+    await ev(`document.querySelector('.tip-jar-link').click()`);
+    await sleep(800);
+    const viaJar = read();
+    check(`tip jar (${lang}): pill and jar open the same page`, viaPill.length === 1 && viaPill[0] === url && viaJar.length === 1 && viaJar[0] === url && r.aria === 'true' && r.tab === '-1' && r.alt === '' && r.cursor === 'pointer', JSON.stringify({ r, viaPill, viaJar }));
+  }
+  await ev(`GC.settingsUI.save({ language: 'en' }).then(() => 1)`);
+  await ev(`GC.settingsUI.close()`);
 
   check('no errors in the console during the run', !errors.length, errors.join(' | '));
 } catch (err) {

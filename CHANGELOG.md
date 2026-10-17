@@ -1,5 +1,10 @@
 # Changelog
 
+## 26.10.6 — 2026-10-17
+
+- The tip jar in Settings → Help & About is a link too: a click on the jar does what the Tip jar button does.
+- Dependencies: checked with `npm outdated`; nothing to update within minor/patch versions. `npm audit` reports 8 moderate advisories, all in the build tools (electron-builder chain), none in what ships with the app.
+
 ## 26.10.5 — 2026-10-17
 
 - **Tip jar card** in Settings → Help & About (at the bottom): a small card with the tip jar of the site, one line and a **Tip jar** button (*Salvadanaio*, *Hucha*) that opens the site page in your browser, in the language of the app. It is only there: nothing in the main window, no pop-ups, no reminders, no counters.

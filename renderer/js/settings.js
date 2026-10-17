@@ -446,6 +446,7 @@ GC.settingsUI = (() => {
 
   // ---- Help & About ----
   async function about() {
+    const openTip = () => window.api.links.open(t('about.tipUrl'));
     const info = await window.api.app.info();
     const m = msg();
     const link = (url, label) => h('button', { class: 'linkish', type: 'button', text: label, onclick: () => window.api.links.open(url) });
@@ -494,10 +495,12 @@ GC.settingsUI = (() => {
         ...[['Space', 'keys.space'], ['N', 'keys.next'], ['R', 'keys.reset'], ['O', 'keys.mode'], ['F / F11', 'keys.fullscreen'], ['S', 'keys.settings'], ['← →', 'keys.news'], ['Esc', 'keys.esc']].flatMap(([k, d]) => [h('dt', { class: 'mono', text: k }), h('dd', { text: t(d) })])),
       // the tip jar: one card at the bottom of this page, nowhere else (apps/COMMON-FEATURES.md, section 6)
       h('aside', { class: 'tip-card' },
-        h('img', { class: 'tip-jar', src: 'img/tip-jar.png', alt: '', width: 176, height: 130 }),
+        // the jar is a second link to the same page as the pill; keyboard and screen readers keep the pill only
+        h('span', { class: 'tip-jar-link', 'aria-hidden': 'true', tabindex: '-1', onclick: openTip },
+          h('img', { class: 'tip-jar', src: 'img/tip-jar.png', alt: '', width: 176, height: 130 })),
         h('div', { class: 'tip-body' },
           h('p', { class: 'tip-text', text: t('about.tipText') }),
-          h('button', { class: 'tip-pill', type: 'button', text: t('about.tipButton'), onclick: () => window.api.links.open(t('about.tipUrl')) }))));
+          h('button', { class: 'tip-pill', type: 'button', text: t('about.tipButton'), onclick: openTip }))));
   }
 
   // ---- shell ----
