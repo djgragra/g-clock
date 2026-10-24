@@ -66,7 +66,7 @@ test('logo: only raster data URLs from the resize step', () => {
 test('partial patches keep the other values', () => {
   const base = sanitizeSettings({ breaks: { enabled: true, marks: [10, 40], label: 'ADS', warnSec: 30 } });
   const next = sanitizeSettings({ breaks: { enabled: false } }, base);
-  assert.deepEqual(next.breaks, { enabled: false, marks: [10, 40], label: 'ADS', warnSec: 30, grids: [] });
+  assert.deepEqual(next.breaks, { enabled: false, marks: [10, 40], label: 'ADS', warnSec: 30, blinkSec: 60, grids: [] });
 });
 
 test('break marks: integers 0-59, unique, sorted', () => {
@@ -134,4 +134,21 @@ test('import rejects foreign and empty files', () => {
   assert.throws(() => parseImport({}), /invalid/);
   assert.throws(() => parseImport([]), /invalid/);
   assert.throws(() => parseImport(null), /invalid/);
+});
+
+test('blink seconds before a stopset: 60 by default, 0 = never, limits, old files keep the default', () => {
+  assert.equal(defaults().breaks.blinkSec, 60);
+  assert.equal(sanitizeSettings({ breaks: { blinkSec: 0 } }).breaks.blinkSec, 0);
+  assert.equal(sanitizeSettings({ breaks: { blinkSec: 45.4 } }).breaks.blinkSec, 45);
+  assert.equal(sanitizeSettings({ breaks: { blinkSec: -5 } }).breaks.blinkSec, 0);
+  assert.equal(sanitizeSettings({ breaks: { blinkSec: 99999 } }).breaks.blinkSec, 1800);
+  assert.equal(sanitizeSettings({ breaks: { blinkSec: 'x' } }).breaks.blinkSec, 60);
+  assert.equal(sanitizeSettings({ breaks: { marks: [5] } }).breaks.blinkSec, 60, 'a file without the field keeps 60');
+});
+
+test('clock only: off by default, a boolean, kept by a backup import', () => {
+  assert.equal(defaults().clockOnly, false);
+  assert.equal(sanitizeSettings({ clockOnly: true }).clockOnly, true);
+  assert.equal(sanitizeSettings({ clockOnly: 'yes' }).clockOnly, false);
+  assert.equal(sanitizeSettings({ language: 'it' }, sanitizeSettings({ clockOnly: true })).clockOnly, true);
 });

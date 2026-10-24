@@ -80,5 +80,12 @@ GC.dialMath = (() => {
     return mark < minute ? 'passed' : 'upcoming';
   }
 
-  return { SEG, angle, colorFP, arc, untilMark, nextStopset, onStopset, flashing, markerState };
+  // State of the countdown to the next stopset: 'blink' within blinkSec (0 = never blinks), 'warn' within
+  // warnSec, otherwise 'normal'. The marker on the dial blinks under the same rule.
+  function countdownState(remaining, warnSec, blinkSec) {
+    if (blinkSec > 0 && remaining <= blinkSec) return 'blink';
+    return remaining <= warnSec ? 'warn' : 'normal';
+  }
+
+  return { SEG, angle, colorFP, arc, untilMark, nextStopset, onStopset, flashing, markerState, countdownState };
 })();

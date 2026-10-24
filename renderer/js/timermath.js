@@ -75,5 +75,25 @@ GC.timerMath = (() => {
     return s;
   }
 
-  return { clk, durStr, parseDur, hasTakes, totalTakes, cumDevBefore, effTarget, buildReport, reportText };
+  // CSV of the report (RFC 4180: comma, CRLF, quotes doubled). One row per block, then a TOTAL row; the
+  // columns have fixed English names so that a spreadsheet or a script can rely on them, times are in
+  // seconds. A cell that a spreadsheet could read as a formula gets a leading apostrophe.
+  const CSV_COLUMNS = ['program', 'recorded_at', 'n', 'block', 'planned_s', 'actual_s', 'diff_s', 'takes_s'];
+  const csvCell = (v) => {
+    let s = v === null || v === undefined ? '' : String(v);
+    if (typeof v !== 'number' && /^[=+\-@\t\r]/.test(s)) s = "'" + s; // numbers (a negative difference) are not text
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  // `when`: local date and time text, already formatted ("2026-10-24 09:30:00"); `rows` of buildReport
+  function reportCsv(r, name, when) {
+    const line = (o) => CSV_COLUMNS.map((c) => csvCell(o[c])).join(',');
+    const lines = [CSV_COLUMNS.join(',')];
+    for (const x of r.rows) {
+      lines.push(line({ program: name, recorded_at: when, n: x.n, block: x.label, planned_s: x.planned, actual_s: x.actual, diff_s: x.diff, takes_s: x.takes ? x.takes.join('+') : '' }));
+    }
+    lines.push(line({ program: name, recorded_at: when, n: '', block: 'TOTAL', planned_s: r.totPlanned, actual_s: r.totActual, diff_s: r.drift, takes_s: '' }));
+    return lines.join('\r\n') + '\r\n';
+  }
+
+  return { clk, durStr, parseDur, hasTakes, totalTakes, cumDevBefore, effTarget, buildReport, reportText, reportCsv, CSV_COLUMNS };
 })();

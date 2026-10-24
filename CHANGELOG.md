@@ -1,5 +1,14 @@
 # Changelog
 
+## 26.10.6 — 2026-10-24
+
+- **Fix: macOS on Apple Silicon said the app was "damaged".** The Apple Silicon build had a signature that was no longer valid (macOS: "code has no resources but signature indicates they must be present"), and recent macOS versions refuse such an app instead of offering to open it. The app is now signed ad hoc during the build (no Apple account is needed) and the build checks the signature of the app inside each disk image. The first start still shows the usual "unidentified developer" notice: System Settings → Privacy & Security → Open Anyway. If you already downloaded an earlier version and it will not open, run in Terminal: `xattr -cr "/Applications/G-Clock.app" && codesign --force --deep -s - "/Applications/G-Clock.app"`.
+- **Recording report as CSV.** The report window has a new **EXPORT .CSV** button next to *Export .TXT*: one row per block (program, date and time, number, block, planned, recorded, difference, takes), in seconds, and a final TOTAL row, for Excel, Numbers or LibreOffice. The file is UTF-8 with a byte-order mark, so accents and other alphabets read correctly; in a spreadsheet set to a language that uses the comma as decimal separator, open it with the import function (Data → From text/CSV) if it lands in one column.
+- **Clock only.** Settings → General → *Clock only*, or the key **C** on the On Air screen: the dial alone, with no headlines, ticker, weather or feed status, for a wall screen in the studio. Your feeds, cities and buttons stay as they are and come back when you switch it off. It is saved with the settings and the backup.
+- **Blink before a stopset.** Settings → Stopsets → *Blink when seconds left*: how long before a stopset the countdown **and the marker on the dial** blink. 60 s by default (the countdown already blinked in the last minute; now the marker does too); any value up to 1800 s, and 0 switches the blinking off. With "reduce motion" in the system nothing blinks and the colour stays steady.
+- **Dependencies**: Electron 44.9.3 (the previous 44.9.0 carried a security advisory about compromised intermediate certificates, GHSA-jr5w-w6x2-84p9) and electron-builder 26.18; `npm audit` now reports no vulnerabilities.
+- Tests: 142, plus the end-to-end run on the real app (clock only, blinking with and without "reduce motion", the other checks as before).
+
 ## 26.10.5 — 2026-10-17
 
 - **Tip jar card** in Settings → Help & About (at the bottom): a small card with the tip jar of the site, one line and a **Tip jar** button (*Salvadanaio*, *Hucha*) that opens the site page in your browser, in the language of the app. It is only there: nothing in the main window, no pop-ups, no reminders, no counters.

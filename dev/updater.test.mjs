@@ -6,8 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   isNewer, pickInstaller, checkForUpdate, downloadInstaller, sweepPartials, bannerState, remindLaterState, skipVersionState,
-  makeSafetyCopy, installPlan, whatsNew, startupKind, releaseNotesSummary, PRODUCT
+  makeSafetyCopy, installPlan, whatsNew, startupKind, releaseNotesSummary, pageUrl, PRODUCT
 } from '../src/updater.js';
+import { REPO_LINKS } from '../src/schema.js';
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'gclock-upd-'));
 const NAME = 'G-Clock-Setup-26.10.3.exe';
@@ -199,4 +200,14 @@ test('the changelog in the package has a What\'s new for the version in package.
   const log = fs.readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
   assert.ok(whatsNew(log, pkg.version), `CHANGELOG.md has no bullets for ${pkg.version}`);
   assert.ok(pkg.build.files.includes('CHANGELOG.md'), 'CHANGELOG.md must be packaged with the app');
+});
+
+test('the new-version notice links to the app page on the site, in the language of the app, never to GitHub', () => {
+  assert.equal(pageUrl('g-clock', 'en'), 'https://onairgarage.com/tools/g-clock/');
+  assert.equal(pageUrl('g-clock', 'it'), 'https://onairgarage.com/it/tools/g-clock/');
+  assert.equal(pageUrl('g-clock', 'es'), 'https://onairgarage.com/es/tools/g-clock/');
+  assert.equal(pageUrl(undefined, 'fr'), 'https://onairgarage.com/tools/g-clock/', 'unknown language: English; the slug is the app\'s own');
+  for (const lang of ['en', 'it', 'es']) assert.ok(REPO_LINKS.includes(pageUrl(undefined, lang)), `the system browser may open ${lang}`);
+  const main = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'main.js'), 'utf8');
+  assert.match(main, /url: pageUrl\(undefined, resolveLanguage\(\)\)/, 'what the page gets as the link of the notice is the site page');
 });

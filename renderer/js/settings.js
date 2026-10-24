@@ -89,6 +89,7 @@ GC.settingsUI = (() => {
       row('general.seconds', check(s.showSeconds, (v) => save({ showSeconds: v }))),
       row('general.timezone', h('div', {}, tzInput, h('datalist', { id: 'tzList' }, zones.map((z) => h('option', { value: z })))), 'general.timezoneHint'),
       row('general.alwaysOnTop', check(s.alwaysOnTop, (v) => save({ alwaysOnTop: v })), 'general.alwaysOnTopHint'),
+      row('general.clockOnly', check(s.clockOnly, (v) => save({ clockOnly: v })), 'general.clockOnlyHint'),
       row('general.keepAwake', check(s.keepAwake, (v) => save({ keepAwake: v })), 'general.keepAwakeHint'),
       row('general.logo',
         h('div', {},
@@ -122,6 +123,7 @@ GC.settingsUI = (() => {
       m,
       row('breaks.label', text(b.label, (v) => save({ breaks: { label: v } }), { maxLength: 16 })),
       row('breaks.warn', num(b.warnSec, 10, 1800, (v) => save({ breaks: { warnSec: v } })), 'breaks.warnHint'),
+      row('breaks.blink', num(b.blinkSec, 0, 1800, (v) => save({ breaks: { blinkSec: v } })), 'breaks.blinkHint'),
       schedules()
     );
   }
@@ -446,6 +448,7 @@ GC.settingsUI = (() => {
 
   // ---- Help & About ----
   async function about() {
+    const openTip = () => window.api.links.open(t('about.tipUrl'));
     const info = await window.api.app.info();
     const m = msg();
     const link = (url, label) => h('button', { class: 'linkish', type: 'button', text: label, onclick: () => window.api.links.open(url) });
@@ -491,13 +494,15 @@ GC.settingsUI = (() => {
       h('p', { class: 'hint', text: t('about.unsigned') }),
       h('h2', { class: 'sub', text: t('about.keys') }),
       h('dl', { class: 'about-list' },
-        ...[['Space', 'keys.space'], ['N', 'keys.next'], ['R', 'keys.reset'], ['O', 'keys.mode'], ['F / F11', 'keys.fullscreen'], ['S', 'keys.settings'], ['← →', 'keys.news'], ['Esc', 'keys.esc']].flatMap(([k, d]) => [h('dt', { class: 'mono', text: k }), h('dd', { text: t(d) })])),
+        ...[['Space', 'keys.space'], ['N', 'keys.next'], ['R', 'keys.reset'], ['O', 'keys.mode'], ['C', 'keys.clockOnly'], ['F / F11', 'keys.fullscreen'], ['S', 'keys.settings'], ['← →', 'keys.news'], ['Esc', 'keys.esc']].flatMap(([k, d]) => [h('dt', { class: 'mono', text: k }), h('dd', { text: t(d) })])),
       // the tip jar: one card at the bottom of this page, nowhere else (apps/COMMON-FEATURES.md, section 6)
       h('aside', { class: 'tip-card' },
-        h('img', { class: 'tip-jar', src: 'img/tip-jar.png', alt: '', width: 176, height: 130 }),
+        // the jar is a second link to the same page as the pill; keyboard and screen readers keep the pill only
+        h('span', { class: 'tip-jar-link', 'aria-hidden': 'true', tabindex: '-1', onclick: openTip },
+          h('img', { class: 'tip-jar', src: 'img/tip-jar.png', alt: '', width: 176, height: 130 })),
         h('div', { class: 'tip-body' },
           h('p', { class: 'tip-text', text: t('about.tipText') }),
-          h('button', { class: 'tip-pill', type: 'button', text: t('about.tipButton'), onclick: () => window.api.links.open(t('about.tipUrl')) }))));
+          h('button', { class: 'tip-pill', type: 'button', text: t('about.tipButton'), onclick: openTip }))));
   }
 
   // ---- shell ----

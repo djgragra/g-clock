@@ -29,7 +29,8 @@ GC.clock = (() => {
   let locale = 'en';
   let dateFmt;
   let dialDateFmt;
-  let cfg = { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300, grids: [] };
+  let cfg = { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300, blinkSec: 60, grids: [] };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let evCfg = { enabled: true, list: [] };
   let builtKey = null; // the stopset minutes the ring was drawn for; it is redrawn when a schedule changes them
   let dayFmt;
@@ -201,12 +202,14 @@ GC.clock = (() => {
     // stopset markers
     for (const mk of markers) {
       const state = M.markerState(mk.m, sec, cfg.warnSec);
-      const key = state === 'active' ? state + (blink ? 'a' : 'b') : state;
+      // the marker blinks in the last blinkSec seconds, like the countdown; steady with "reduce motion"
+      const blinking = state === 'active' || (state === 'near' && !reduceMotion.matches && M.countdownState(M.untilMark(mk.m, sec), cfg.warnSec, cfg.blinkSec) === 'blink');
+      const key = blinking ? state + (blink ? 'a' : 'b') : state;
       if (key === mk.state) continue;
       mk.state = key;
       const fill = state === 'passed' ? M.colorFP((mk.m + 1) / 60) : state === 'upcoming' ? MARK_BLUE : RED;
       mk.path.setAttribute('fill', fill);
-      mk.path.setAttribute('opacity', key === 'activeb' ? '0.3' : '1');
+      mk.path.setAttribute('opacity', key === 'activeb' || key === 'nearb' ? '0.3' : '1');
       mk.label.style.fill = state === 'upcoming' ? 'var(--mark-up)' : state === 'passed' ? 'var(--mark-past)' : '#ff6b35';
     }
 
@@ -227,13 +230,13 @@ GC.clock = (() => {
       } else {
         const next = M.nextStopset(sec, marks);
         value = GC.mmss(next.remaining);
-        state = next.remaining <= 60 ? 'blink' : next.remaining <= cfg.warnSec ? 'warn' : 'normal';
+        state = M.countdownState(next.remaining, cfg.warnSec, cfg.blinkSec);
       }
     } else {
       label = GC.t('dial.endOfHour');
       const left = 3600 - sec;
       value = GC.mmss(left);
-      state = left <= 60 ? 'blink' : left <= cfg.warnSec ? 'warn' : 'normal';
+      state = M.countdownState(left, cfg.warnSec, cfg.blinkSec);
     }
     setText(el.label, 'label', label);
     setText(el.count, 'count', value);

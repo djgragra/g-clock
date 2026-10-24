@@ -75,3 +75,17 @@ test('report text', () => {
   assert.match(text, /Open\s+02:00\s+02:10\s+\+00:10/);
   assert.match(text, /Final drift:\s+\+00:00/);
 });
+
+test('report CSV: fixed columns, one row per block, a TOTAL row, seconds, CRLF, quotes, formulas', () => {
+  const b = [{ label: 'Open', sec: 120 }, { label: '=SUM(A1)', sec: 600 }, { label: 'Say "hi", then go', sec: 300 }];
+  const r = T.buildReport(b, [[130], [300, 280], []], (i) => 'Block ' + (i + 1));
+  const csv = T.reportCsv(r, 'Morning, show', '2026-10-24 09:30:00');
+  const lines = csv.split('\r\n');
+  assert.equal(lines[0], 'program,recorded_at,n,block,planned_s,actual_s,diff_s,takes_s');
+  assert.equal(lines[1], '"Morning, show",2026-10-24 09:30:00,1,Open,120,130,10,');
+  assert.equal(lines[2], '"Morning, show",2026-10-24 09:30:00,2,\'=SUM(A1),600,580,-20,300+280', 'formula guarded, negative number untouched, takes joined');
+  assert.equal(lines[3], '"Morning, show",2026-10-24 09:30:00,3,"Say ""hi"", then go",300,,,', 'quotes doubled, block without take is empty');
+  assert.equal(lines[4], '"Morning, show",2026-10-24 09:30:00,,TOTAL,1020,710,-310,');
+  assert.equal(lines[5], '');
+  assert.equal(csv.endsWith('\r\n'), true);
+});

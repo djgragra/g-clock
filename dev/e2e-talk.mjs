@@ -5,7 +5,16 @@
 // programs, limits and colours, the REC chip and the settings page. Linux only as written.
 //   node dev/e2e-talk.mjs        needs: npm ci, xvfb-run (or a display)
 // It uses a throw-away profile folder, never the user's settings.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { launch, sleep } from './driver.mjs';
+
+// a stand-in for xdg-open records what the app asks the system to open (no browser is started, the allow-list in main.js still decides)
+const openLog = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gclock-open-')), 'opened.txt');
+const binDir = path.dirname(openLog);
+fs.writeFileSync(path.join(binDir, 'xdg-open'), `#!/bin/sh\necho "$1" >> '${openLog}'\n`, { mode: 0o755 });
+process.env.PATH = `${binDir}:${process.env.PATH}`;
 
 const app = await launch({ extraArgs: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 const { ev, send, errors } = app;
@@ -215,6 +224,70 @@ try {
   check('follow the system: it changes with the system', (await ev('document.documentElement.dataset.theme')) === 'dark');
   await send('Emulation.setEmulatedMedia', { features: [] });
   await ev(`GC.settingsUI.save({ theme: 'dark' }).then(() => 1)`);
+
+  // ---- tip jar: a click on the jar goes where the pill goes (through the bridge and the allow-list, to the system) ----
+  for (const [lang, url] of [['en', 'https://onairgarage.com/support/'], ['it', 'https://onairgarage.com/it/support/'], ['es', 'https://onairgarage.com/es/support/']]) {
+    await ev(`GC.settingsUI.save({ language: '${lang}' }).then(() => 1)`);
+    await ev(`GC.settingsUI.open('about')`);
+    await sleep(500);
+    const read = () => (fs.existsSync(openLog) ? fs.readFileSync(openLog, 'utf-8').split('\n').filter(Boolean) : []);
+    const r = JSON.parse(await ev(`(() => { const jar = document.querySelector('.tip-jar-link'); return JSON.stringify({ aria: jar.getAttribute('aria-hidden'), tab: jar.getAttribute('tabindex'), alt: jar.querySelector('img').getAttribute('alt'), cursor: getComputedStyle(jar).cursor }); })()`));
+    fs.rmSync(openLog, { force: true });
+    await ev(`document.querySelector('.tip-pill').click()`);
+    await sleep(800);
+    const viaPill = read();
+    fs.rmSync(openLog, { force: true });
+    await ev(`document.querySelector('.tip-jar-link').click()`);
+    await sleep(800);
+    const viaJar = read();
+    check(`tip jar (${lang}): pill and jar open the same page`, viaPill.length === 1 && viaPill[0] === url && viaJar.length === 1 && viaJar[0] === url && r.aria === 'true' && r.tab === '-1' && r.alt === '' && r.cursor === 'pointer', JSON.stringify({ r, viaPill, viaJar }));
+  }
+  await ev(`GC.settingsUI.save({ language: 'en' }).then(() => 1)`);
+  await ev(`GC.settingsUI.close()`);
+
+  // ---- clock only: the dial alone (key C), the feeds stay configured ----
+  await talk({ enabled: false });
+  const shown = (sel) => ev(`(() => { const e = document.querySelector('${sel}'); return !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 0; })()`);
+  await ev(`GC.settingsUI.save({ airMode: 'onair', clockOnly: false, news: { enabled: true, ticker: true }, weather: { enabled: true, places: [{ id: 'p1', name: 'Test city', detail: '', lat: 10, lon: 10 }] } }).then(() => 1)`);
+  await ev(`GC.news.update({ enabled: true, items: [{ id: 'x', title: 'Headline', source: 'Feed', time: Date.now(), link: 'https://example.org/a' }], sources: [] })`);
+  await sleep(300);
+  check('clock only is off by default: headlines and weather columns are laid out', !(await ev('GC.state.settings.clockOnly')) && (await shown('#newsPanel')) && (await shown('#infoPanel')));
+  await key('KeyC', 'c');
+  await sleep(400);
+  check('key C: clock only; headlines, ticker and weather are gone, the dial is there', (await ev('GC.state.settings.clockOnly')) && (await cls()).includes('clock-only') && !(await shown('#newsPanel')) && !(await shown('#infoPanel')) && !(await shown('#ticker')) && (await shown('#dial')));
+  check('clock only is saved in the settings file', (await ev(`window.api.settings.get().then((p) => p.settings.clockOnly)`)) === true);
+  await ev(`GC.settingsUI.open('general')`);
+  await sleep(300);
+  check('Settings → General shows the switch, on', await ev(`document.querySelector('.settings-panel').textContent.includes('Clock only')`));
+  await ev(`GC.settingsUI.close()`);
+  await key('KeyC', 'c');
+  await sleep(400);
+  check('key C again: back to the full view, nothing lost', !(await ev('GC.state.settings.clockOnly')) && (await shown('#newsPanel')) && (await shown('#infoPanel')) && (await ev('GC.state.settings.news.feeds.length > 0')));
+  await ev(`GC.settingsUI.save({ weather: { enabled: false, places: [] } }).then(() => 1)`);
+
+  // ---- blinking before a stopset: countdown and marker blink in the last blinkSec seconds ----
+  const at = (m, sec) => ev(`(() => { GC.clock.render(new Date(2026, 9, 24, 10, ${m}, ${sec})); const mk = [...document.querySelectorAll('#dial > path')].map((p) => p.getAttribute('opacity')).filter(Boolean); return JSON.stringify({ count: document.querySelector('.dial-count').getAttribute('class'), opacity: mk }); })()`).then(JSON.parse);
+  await ev(`GC.settingsUI.save({ breaks: { enabled: true, marks: [0, 30], warnSec: 300, blinkSec: 60, grids: [] } }).then(() => 1)`);
+  let a = await at(29, 20); // 40 s to the stopset, even second
+  let b = await at(29, 21);
+  check('blink 60: 40 s before, the countdown blinks and the marker flashes second by second', a.count.includes('blink') && a.opacity.includes('1') && b.opacity.includes('0.3'), JSON.stringify({ a, b }));
+  a = await at(28, 20); // 100 s to go: warning colour, no blink
+  b = await at(28, 21);
+  check('blink 60: 100 s before, warning colour, steady marker', a.count.includes('warn') && !a.count.includes('blink') && !b.opacity.includes('0.3'), JSON.stringify({ a, b }));
+  await ev(`GC.settingsUI.save({ breaks: { blinkSec: 0 } }).then(() => 1)`);
+  a = await at(29, 20);
+  b = await at(29, 21);
+  check('blink 0: nothing blinks, warning colour only', a.count.includes('warn') && !a.count.includes('blink') && !b.opacity.includes('0.3'), JSON.stringify({ a, b }));
+  await ev(`GC.settingsUI.save({ breaks: { blinkSec: 120 } }).then(() => 1)`);
+  a = await at(28, 20);
+  check('blink 120: 100 s before it already blinks', a.count.includes('blink'), JSON.stringify(a));
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  await sleep(200);
+  a = await at(29, 20);
+  b = await at(29, 21);
+  check('"reduce motion": the marker stays steady in the last seconds', !a.opacity.includes('0.3') && !b.opacity.includes('0.3'), JSON.stringify({ a, b }));
+  await send('Emulation.setEmulatedMedia', { features: [] });
+  await ev(`GC.settingsUI.save({ breaks: { blinkSec: 60 } }).then(() => 1)`);
 
   check('no errors in the console during the run', !errors.length, errors.join(' | '));
 } catch (err) {

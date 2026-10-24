@@ -1,6 +1,6 @@
 {
   "name": "g-clock",
-  "version": "26.10.5",
+  "version": "26.10.6",
   "description": "Studio clock for radio presenters: 60-minute dial with stopset markers, headlines, weather, recording timer with pre-roll",
   "main": "main.js",
   "type": "module",
@@ -27,6 +27,7 @@
     "appId": "com.onairgarage.gclock",
     "productName": "G-Clock",
     "publish": null,
+    "afterPack": "dev/sign-adhoc.cjs",
     "files": [
       "main.js",
       "preload.cjs",

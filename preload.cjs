@@ -17,7 +17,7 @@ contextBridge.exposeInMainWorld('api', {
     import: () => ipcRenderer.invoke('programs:import')
   },
   report: {
-    save: (name, text) => ipcRenderer.invoke('report:save', name, text)
+    save: (name, text, format) => ipcRenderer.invoke('report:save', name, text, format)
   },
   clipboard: {
     write: (text) => ipcRenderer.invoke('clipboard:write', text)

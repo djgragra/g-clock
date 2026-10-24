@@ -20,6 +20,7 @@
     GC.links.configure(s);
     GC.talk?.configure(s, payload);
     paintBrand(s);
+    document.body.classList.toggle('clock-only', !!s.clockOnly);
     paintMode(s.airMode);
     lastSecond = -1;
     tick();
@@ -71,6 +72,15 @@
     window.api.settings.update({ airMode: next });
   }
 
+  // ---- clock only: the dial alone, for a wall screen (the feeds and cities stay configured) ----
+  function toggleClockOnly() {
+    const next = !GC.state.settings.clockOnly;
+    GC.state.settings.clockOnly = next;
+    document.body.classList.toggle('clock-only', next);
+    window.api.settings.update({ clockOnly: next });
+    if (GC.settingsUI.isOpen()) GC.settingsUI.render();
+  }
+
   // ---- loop ----
   function tick() {
     const now = new Date();
@@ -116,6 +126,7 @@
     } else if (key === 'n' && isRec()) GC.timer.next();
     else if (key === 'r' && isRec()) GC.timer.reset();
     else if (key === 'o') setMode(isRec() ? 'onair' : 'rec');
+    else if (key === 'c' && !isRec()) toggleClockOnly();
     else if (key === 's') GC.settingsUI.open();
     else if (key === 'f') window.api.window.toggleFullscreen();
     else if (e.key === 'ArrowRight') GC.news.step(1);
