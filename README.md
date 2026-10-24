@@ -68,6 +68,8 @@ The window itself has no network access at all; everything remote goes through t
 
 Download the installer for your system from the [Releases](https://github.com/djgragra/g-clock/releases) page and check it against `SHA256SUMS.txt`.
 
+The **user manual** is attached to every release as three PDFs: English (`G-Clock-Manual-EN-<version>.pdf`), Italian (`-IT-`) and Spanish (`-ES-`). Its source is in `docs/manual/` (`python3 docs/manual/build.py <version> <folder>` makes the PDFs; it needs Chrome or Chromium).
+
 The app is free and has **no paid code-signing certificate**, so the first launch may show a warning:
 
 - **macOS**: the app is signed ad hoc (no Apple account), so the first start says "unidentified developer": open *System Settings → Privacy & Security*, scroll down and click *Open Anyway*. **Second method**, in Terminal (it also opens an earlier version that says "damaged"):
