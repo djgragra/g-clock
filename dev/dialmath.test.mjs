@@ -65,3 +65,14 @@ test('arc: valid path, minute 0 centred at 12 o clock', () => {
   assert.ok(Math.abs(M.angle(0) + M.SEG / 2 + Math.PI / 2) < 1e-9, 'segment 0 is centred on the top');
   assert.ok(Math.abs(M.angle(60) - M.angle(0) - 2 * Math.PI) < 1e-9);
 });
+
+test('countdown state: blink within blinkSec (0 = never), then warn, then normal', () => {
+  assert.equal(M.countdownState(300, 300, 60), 'warn');
+  assert.equal(M.countdownState(61, 300, 60), 'warn');
+  assert.equal(M.countdownState(60, 300, 60), 'blink');
+  assert.equal(M.countdownState(1, 300, 60), 'blink');
+  assert.equal(M.countdownState(30, 300, 0), 'warn', '0 switches the blinking off');
+  assert.equal(M.countdownState(30, 300, 30), 'blink');
+  assert.equal(M.countdownState(500, 300, 60), 'normal');
+  assert.equal(M.countdownState(100, 30, 120), 'blink', 'blinking may start before the warning colour');
+});

@@ -23,6 +23,8 @@ export const REPO_LINKS = [
   'https://open-meteo.com/',
   'https://onairgarage.com',
   'https://onairgarage.com/tools/g-clock/',
+  'https://onairgarage.com/it/tools/g-clock/',
+  'https://onairgarage.com/es/tools/g-clock/',
   'https://github.com/djgragra/g-clock',
   'https://github.com/djgragra/g-clock/blob/main/README.md'
 ];
@@ -67,11 +69,12 @@ export function defaults() {
     timeZone: 'system',
     alwaysOnTop: false,
     keepAwake: false,
+    clockOnly: false, // On Air view with the dial only: no headlines, ticker or weather (key C)
     airMode: 'onair', // 'onair' | 'rec'
     logo: null, // data: URL of a PNG/JPEG already resized to 512 px max
     // marks = the stopset minutes of the hour; grids = optional other sets of minutes for certain days and hours
     // (the first grid that matches now wins, otherwise marks apply). No grids = one set all the time, as before.
-    breaks: { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300, grids: [] },
+    breaks: { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300, blinkSec: 60, grids: [] },
     // fixed events at a time of day (news, ad block…): the clock counts down to the next one
     events: { enabled: true, list: [] },
     timer: { sound: false, preroll: true, dynamic: true, program: null, presets: [60, 120, 180, 300, 600, 900] },
@@ -210,6 +213,7 @@ const SANITIZERS = {
   timeZone: (v, cur) => (v === 'system' || isValidTimeZone(v) ? v : cur),
   alwaysOnTop: (v, cur) => bool(v, cur),
   keepAwake: (v, cur) => bool(v, cur),
+  clockOnly: (v, cur) => bool(v, cur),
   airMode: (v, cur) => oneOf(v, ['onair', 'rec'], cur),
   checkUpdates: (v, cur) => bool(v, cur),
   theme: (v, cur) => oneOf(v, ['dark', 'light', 'system'], cur),
@@ -231,6 +235,7 @@ const SANITIZERS = {
       marks,
       label: v.label === undefined ? cur.label : cleanText(v.label, 16) || cur.label,
       warnSec: int(v.warnSec, 10, 1800, cur.warnSec),
+      blinkSec: int(v.blinkSec, 0, 1800, cur.blinkSec),
       grids: Array.isArray(v.grids) ? sanitizeGrids(v.grids) : cur.grids || []
     };
   },

@@ -75,4 +75,17 @@ test('tip jar card: text, button and site page in all three languages, the pictu
   assert.ok(fs.existsSync(path.join(root, 'img', 'tip-jar.png')));
   const settingsJs = fs.readFileSync(path.join(root, 'js', 'settings.js'), 'utf-8');
   assert.equal((settingsJs.match(/tip-card/g) || []).length, 1, 'the card is built in one place only (Help & About)');
+  // the jar is a second link to the same page: same handler (one function, one bridge call, the URL of the app language) as the pill
+  assert.match(settingsJs, /const openTip = \(\) => window\.api\.links\.open\(t\('about\.tipUrl'\)\);/);
+  assert.equal((settingsJs.match(/window\.api\.links\.open\(t\('about\.tipUrl'\)\)/g) || []).length, 1, 'one call to the bridge for the card');
+  const jar = settingsJs.match(/h\('span', \{ class: 'tip-jar-link'[^\n]*/)?.[0] || '';
+  assert.match(jar, /onclick: openTip/);
+  assert.match(jar, /'aria-hidden': 'true'/);
+  assert.match(jar, /tabindex: '-1'/);
+  assert.match(settingsJs, /class: 'tip-pill'[^\n]*onclick: openTip/);
+  assert.match(settingsJs, /class: 'tip-jar', src: 'img\/tip-jar\.png', alt: ''/);
+  const css = fs.readFileSync(path.join(root, 'style.css'), 'utf-8');
+  assert.match(css, /\.tip-jar-link \{[^}]*cursor: pointer[^}]*transition: transform \.15s ease/);
+  assert.match(css, /\.tip-jar-link:hover \{ transform: rotate\(-4deg\) scale\(1\.06\); \}/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{.*\.tip-jar-link:hover \{ transform: none; \}/);
 });

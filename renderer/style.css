@@ -105,6 +105,10 @@ header::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; h
 .no-news.no-info .main { grid-template-columns: minmax(0, 1fr); }
 .no-info .vdiv-info, .no-news .vdiv-news, .no-news.no-info .vdiv { display: none; }
 
+/* Clock only (Settings → General, key C): the dial alone; the feeds and cities stay configured */
+.clock-only:not(.mode-rec) .col-news, .clock-only:not(.mode-rec) .col-info, .clock-only .vdiv, .clock-only .ticker, .clock-only #feedPill { display: none; }
+.clock-only .main { grid-template-columns: minmax(0, 1fr); }
+
 /* REC: the timer takes the whole area */
 .mode-rec .main { grid-template-columns: minmax(0, 1fr); }
 .mode-rec .col-clock, .mode-rec .col-news, .mode-rec .col-info, .mode-rec .vdiv { display: none; }
@@ -422,7 +426,10 @@ path.blink { animation: blink-rec 0.9s step-end infinite; }
 .linkish:hover { color: var(--cherry-hi); }
 /* tip jar card (Help & About): small but visible; the pill is the same cherry in every OnAir Garage app */
 .tip-card { display: flex; align-items: center; gap: 1.1em; margin: 2em 0 0.4em; padding: 0.9em 1.2em; max-width: 44em; background: var(--bg3); border: 1px solid var(--bdr2); border-radius: 14px; }
-.tip-jar { width: 80px; height: auto; flex-shrink: 0; }
+.tip-jar-link { display: block; flex-shrink: 0; cursor: pointer; transition: transform .15s ease; }
+.tip-jar-link:hover { transform: rotate(-4deg) scale(1.06); }
+@media (prefers-reduced-motion: reduce) { .tip-jar-link { transition: none; } .tip-jar-link:hover { transform: none; } }
+.tip-jar { display: block; width: 80px; height: auto; }
 .tip-body { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6em; min-width: 0; }
 .settings .tip-text { margin: 0; font-size: 15px; line-height: 1.35; color: var(--dim); }
 .tip-pill { padding: 0.35em 1.2em; border: 2px solid #fbf4e4; border-radius: 99px; background: #c8232c; color: #fbf4e4; font-family: var(--fc); font-weight: 800; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35); }

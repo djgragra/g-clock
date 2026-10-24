@@ -205,7 +205,19 @@ GC.programs = (() => {
 
   function saveReport() {
     const r = GC.timer.getReport();
-    if (r) window.api.report.save(reportName(r), reportText());
+    if (r) window.api.report.save(reportName(r), reportText(), 'txt');
+  }
+
+  // "2026-10-24 09:30:00" in the computer's time zone, the same in every language
+  const csvWhen = (ms) => {
+    const d = new Date(ms);
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  };
+
+  function saveReportCsv() {
+    const r = GC.timer.getReport();
+    if (r) window.api.report.save(reportName(r), T.reportCsv(r, reportName(r), csvWhen(r.when || Date.now())), 'csv');
   }
 
   // Escape closes the window on top; returns true when one was open
@@ -234,6 +246,7 @@ GC.programs = (() => {
     $('reportOk').addEventListener('click', () => hide('reportOverlay'));
     $('reportCopy').addEventListener('click', copyReport);
     $('reportSave').addEventListener('click', saveReport);
+    $('reportCsv').addEventListener('click', saveReportCsv);
     for (const id of ['manageOverlay', 'editorOverlay', 'reportOverlay']) {
       $(id).addEventListener('mousedown', (e) => { if (e.target === $(id)) hide(id); });
     }

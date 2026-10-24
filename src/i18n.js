@@ -26,6 +26,7 @@ const TEXT = {
   programsFilter: { en: 'Programs file (JSON)', it: 'File programmi (JSON)', es: 'Archivo de programas (JSON)' },
   reportTitle: { en: 'Save report', it: 'Salva report', es: 'Guardar informe' },
   txtFilter: { en: 'Text file', it: 'File di testo', es: 'Archivo de texto' },
+  csvFilter: { en: 'CSV file', it: 'File CSV', es: 'Archivo CSV' },
   resetMessage: { en: 'Restore the default settings?', it: 'Ripristinare le impostazioni predefinite?', es: '¿Restaurar los ajustes predeterminados?' },
   resetDetail: {
     en: 'Feeds, cities, buttons, logo, schedules, events and all other settings go back to their defaults, and the recording programs are removed.',

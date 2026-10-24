@@ -12,7 +12,7 @@ import {
 import { createNews } from './src/feeds.js';
 import { createWeather, geocode } from './src/weather.js';
 import {
-  checkForUpdate, downloadInstaller, sweepPartials, bannerState, remindLaterState, skipVersionState, makeSafetyCopy, installPlan,
+  checkForUpdate, pageUrl, downloadInstaller, sweepPartials, bannerState, remindLaterState, skipVersionState, makeSafetyCopy, installPlan,
   whatsNew, startupKind, REPO
 } from './src/updater.js';
 import { buildBackup, prepareImport, applyImport, backupFileName, MAX_BACKUP_BYTES } from './src/backup.js';
@@ -362,17 +362,19 @@ handle('programs:import', async () => {
   }
 });
 
-handle('report:save', async (name, text) => {
+handle('report:save', async (name, text, format) => {
   if (typeof text !== 'string' || text.length > 200_000) return { ok: false, error: 'invalid' };
+  const csv = format === 'csv';
   const base = String(name || 'report').replace(/[^\p{L}\p{N}_-]+/gu, '_').slice(0, 60) || 'report';
   const res = await dialog.showSaveDialog(mainWindow, {
     title: T('reportTitle'),
-    defaultPath: `report-${base}.txt`,
-    filters: [{ name: T('txtFilter'), extensions: ['txt'] }]
+    defaultPath: `report-${base}.${csv ? 'csv' : 'txt'}`,
+    filters: csv ? [{ name: T('csvFilter'), extensions: ['csv'] }] : [{ name: T('txtFilter'), extensions: ['txt'] }]
   });
   if (res.canceled || !res.filePath) return { ok: false, canceled: true };
   try {
-    fs.writeFileSync(res.filePath, text, 'utf-8');
+    // a CSV gets a byte-order mark so that Excel reads accents and non-Latin names as UTF-8
+    fs.writeFileSync(res.filePath, csv ? '\uFEFF' + text : text, 'utf-8');
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err.message };
@@ -472,7 +474,7 @@ const publicInfo = (info) =>
     current: info.current,
     latest: info.latest,
     available: !!info.available,
-    url: info.url,
+    url: pageUrl(undefined, resolveLanguage()), // the app's page on the site, in the language of the app (not the GitHub release)
     notes: info.notes || '',
     canInstall: !!(info.installer && info.sumsUrl),
     installerName: info.installer?.name || '',

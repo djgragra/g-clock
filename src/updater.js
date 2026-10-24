@@ -13,6 +13,7 @@ import path from 'node:path';
 
 export const REPO = 'djgragra/g-clock';
 export const PRODUCT = 'G-Clock';
+const SLUG = 'g-clock';
 const REPO_RE = /^[\w.-]+\/[\w.-]+$/;
 const DAY = 86_400_000;
 const STALL_MS = 60_000; // no byte for this long: the download is given up and cleaned up
@@ -56,6 +57,14 @@ export function releaseNotesSummary(body, maxLines = 6, maxChars = 500) {
   const lines = String(body || '').split(/\r?\n/).map((l) => l.replace(/^[#>*\-\s]+/, '').replace(/[*_`]/g, '').trim()).filter(Boolean);
   const text = lines.slice(0, maxLines).join('\n');
   return text.length > maxChars ? text.slice(0, maxChars - 1) + '…' : text;
+}
+
+// The app's page on the site (installer for each system, changelog, hashes): the link that the new-version notice
+// and the "release notes" button use. English has no prefix; an unknown language falls back to English.
+// `url` of a check stays the GitHub release page: it is what the check returns internally and what the tests read.
+export function pageUrl(slug = SLUG, lang = 'en') {
+  const prefix = lang === 'it' ? '/it' : lang === 'es' ? '/es' : '';
+  return `https://onairgarage.com${prefix}/tools/${slug}/`;
 }
 
 export async function checkForUpdate({ repo = REPO, current, fetchFn }) {
