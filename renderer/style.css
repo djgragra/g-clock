@@ -499,6 +499,21 @@ path.blink { animation: blink-rec 0.9s step-end infinite; }
 .event-bar.now .ev-tag, .event-bar.now .ev-time { color: #fff; }
 .event-bar.now .ev-count { animation: blink-rec 0.8s step-end infinite; }
 
+/* messages for the announcer: the one on screen, the quick choices, the line to type a one-off */
+.note-bar { display: flex; align-items: center; justify-content: center; gap: 0.7em; flex-shrink: 0; max-width: 100%; padding: 0.4em 1.1em; border-radius: var(--radius); border: 2px solid var(--blue); background: rgba(59, 130, 246, 0.16); box-shadow: var(--shadow-s); font-family: var(--fc); font-size: clamp(20px, 2.2vw, 44px); letter-spacing: 1px; font-weight: 700; cursor: pointer; }
+.note-tag { font-size: 0.45em; letter-spacing: 3px; color: var(--dim); text-transform: uppercase; }
+.note-text { min-width: 0; overflow-wrap: anywhere; text-align: center; color: var(--fg); }
+.note-write { flex-shrink: 0; width: min(100%, 36em); }
+.note-input { width: 100%; padding: 0.4em 0.7em; border-radius: var(--radius-s); border: 1px solid var(--blue); background: var(--card); color: var(--fg); font: inherit; font-size: clamp(16px, 1.4vw, 26px); }
+.note-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4em; flex-shrink: 0; max-width: 100%; }
+.note-chip { display: inline-flex; align-items: center; gap: 0.5em; max-width: 16em; padding: 0.2em 0.7em 0.2em 0.3em; border: 1px solid var(--bdr2); border-radius: 999px; background: var(--card); color: var(--fg2); font-size: clamp(13px, 1vw, 18px); transition: background 0.15s, border-color 0.15s; }
+.note-chip:hover { border-color: var(--fg2); }
+.note-chip.on { border-color: var(--blue); background: rgba(59, 130, 246, 0.22); color: var(--fg); }
+.note-key { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--bg2); font-family: var(--mono); font-size: 0.85em; }
+.note-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.idle .note-chips { visibility: hidden; }
+.clock-only .note-chips { display: none; }
+
 /* headlines and weather as cards */
 .news-list { gap: 0.8vh; padding: 0.8vh 0.8vw; }
 .ni { border: 1px solid var(--bdr); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow-s); transition: background 0.15s, border-color 0.15s, transform 0.15s; }
