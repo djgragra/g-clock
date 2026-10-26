@@ -18,6 +18,7 @@
     GC.news.configure(s, GC.state.locale);
     GC.weather.configure(s);
     GC.links.configure(s);
+    GC.notes.configure(s);
     GC.talk?.configure(s, payload);
     paintBrand(s);
     document.body.classList.toggle('clock-only', !!s.clockOnly);
@@ -127,6 +128,12 @@
     else if (key === 'r' && isRec()) GC.timer.reset();
     else if (key === 'o') setMode(isRec() ? 'onair' : 'rec');
     else if (key === 'c' && !isRec()) toggleClockOnly();
+    else if (/^[1-9]$/.test(e.key) && !isRec()) GC.notes.pick(Number(e.key));
+    else if (e.key === '0' && !isRec()) GC.notes.clear();
+    else if (key === 'm' && !isRec()) {
+      e.preventDefault();
+      GC.notes.write();
+    }
     else if (key === 's') GC.settingsUI.open();
     else if (key === 'f') window.api.window.toggleFullscreen();
     else if (e.key === 'ArrowRight') GC.news.step(1);
@@ -159,6 +166,7 @@
     GC.programs.init();
     GC.news.init();
     GC.weather.init();
+    GC.notes.init();
     GC.settingsUI.init();
 
     $('btnOnAir').addEventListener('click', () => setMode('onair'));

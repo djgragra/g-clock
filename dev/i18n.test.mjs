@@ -28,7 +28,7 @@ test('no empty texts', () => {
 
 test('every key used by the interface exists', () => {
   const used = new Set();
-  const prefix = /^(common|mode|settings|window|timer|break|news|wx|sec|general|breaks|cities|btn|data|upd|about|keys|ev|sched|bk|pill|new|dial|talk)\./;
+  const prefix = /^(common|mode|settings|window|timer|break|news|wx|sec|general|breaks|cities|btn|data|upd|about|keys|ev|sched|bk|pill|new|dial|talk|note)\./;
   const files = fs.readdirSync(path.join(root, 'js')).map((f) => path.join(root, 'js', f)).filter((f) => !/i18n(-talk)?\.js$/.test(f));
   for (const f of [...files, path.join(root, 'index.html')]) {
     const src = fs.readFileSync(f, 'utf-8');
@@ -37,7 +37,7 @@ test('every key used by the interface exists', () => {
   }
   // keys built at run time
   for (const s of ['ready', 'preroll', 'recording', 'ending', 'paused', 'over']) used.add('timer.state.' + s);
-  for (const s of ['general', 'breaks', 'events', 'timer', 'talk', 'news', 'weather', 'buttons', 'updates', 'backup', 'about']) used.add('sec.' + s);
+  for (const s of ['general', 'breaks', 'events', 'notes', 'timer', 'talk', 'news', 'weather', 'buttons', 'updates', 'backup', 'about']) used.add('sec.' + s);
   for (const s of ['guest', 'meet', 'jitsi', 'zoom', 'cam', 'site', 'chat', 'traffic']) used.add('btn.idea.' + s);
   for (const s of ['cam', 'site', 'chat', 'traffic']) used.add('btn.ideaLabel.' + s);
   // the talk timer builds some keys at run time

@@ -36,6 +36,7 @@ export const LIMITS = {
   marks: 12,
   grids: 8,
   events: 20,
+  notes: 9,
   presets: 8,
   programs: 40,
   blocks: 60,
@@ -77,6 +78,8 @@ export function defaults() {
     breaks: { enabled: true, marks: [0, 30], label: 'STOPSET', warnSec: 300, blinkSec: 60, grids: [] },
     // fixed events at a time of day (news, ad block…): the clock counts down to the next one
     events: { enabled: true, list: [] },
+    // saved short messages for the announcer, shown under the dial with the keys 1..9 (renderer/js/notes.js)
+    notes: { list: [] },
     timer: { sound: false, preroll: true, dynamic: true, program: null, presets: [60, 120, 180, 300, 600, 900] },
     programs: [], // recording programs: [{ id, name, blocks: [{ label, sec }], updated }]
     news: {
@@ -204,6 +207,15 @@ export function sanitizeEvents(input) {
     }));
 }
 
+// Saved messages: { id, text }, up to LIMITS.notes of 1..120 characters. Empty ones are dropped.
+export function sanitizeNotes(input) {
+  const arr = Array.isArray(input) ? input.slice(0, LIMITS.notes) : [];
+  const used = new Set();
+  return arr
+    .filter((n) => n && typeof n === 'object' && cleanText(n.text, 120))
+    .map((n) => ({ id: cleanId(n.id, used), text: cleanText(n.text, 120) }));
+}
+
 // ---- per-key sanitizers: (input, current) -> sanitized value --------------------------
 
 const SANITIZERS = {
@@ -243,6 +255,11 @@ const SANITIZERS = {
   events: (v, cur) => {
     if (!v || typeof v !== 'object') return cur;
     return { enabled: bool(v.enabled, cur.enabled), list: Array.isArray(v.list) ? sanitizeEvents(v.list) : cur.list };
+  },
+
+  notes: (v, cur) => {
+    if (!v || typeof v !== 'object') return cur;
+    return { list: Array.isArray(v.list) ? sanitizeNotes(v.list) : cur.list };
   },
 
   timer: (v, cur) => {

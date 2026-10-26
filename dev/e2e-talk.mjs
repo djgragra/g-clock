@@ -265,6 +265,42 @@ try {
   check('key C again: back to the full view, nothing lost', !(await ev('GC.state.settings.clockOnly')) && (await shown('#newsPanel')) && (await shown('#infoPanel')) && (await ev('GC.state.settings.news.feeds.length > 0')));
   await ev(`GC.settingsUI.save({ weather: { enabled: false, places: [] } }).then(() => 1)`);
 
+  // ---- messages for the announcer: saved ones with the keys 1..9, M for a one-off, 0 to clear, clock only keeps the strip ----
+  await ev(`GC.settingsUI.save({ notes: { list: [{ id: 'n1', text: 'Guest is waiting' }, { id: 'n2', text: 'Wrap up in 1 minute' }] } }).then(() => 1)`);
+  await sleep(300);
+  const note = () => ev(`JSON.stringify({ bar: !document.getElementById('noteBar').hidden, text: document.getElementById('noteText').textContent, on: [...document.querySelectorAll('.note-chip.on')].length })`).then(JSON.parse);
+  check('no message on screen at the start, two quick-choice buttons', !(await note()).bar && (await ev(`document.querySelectorAll('.note-chip').length`)) === 2);
+  await key('Digit2', '2');
+  check('key 2: the second saved message is shown, its button is on', JSON.stringify(await note()) === '{"bar":true,"text":"Wrap up in 1 minute","on":1}', JSON.stringify(await note()));
+  check('the message is large under the dial', await shown('#noteBar'));
+  await key('Digit2', '2');
+  check('the same key again takes it off', !(await note()).bar);
+  await key('Digit1', '1');
+  await key('Digit0', '0');
+  check('0 clears the message', !(await note()).bar);
+  await key('Digit5', '5');
+  check('a key with no saved message does nothing', !(await note()).bar);
+  await key('KeyM', 'm');
+  check('M opens the line to type a one-off message', await shown('#noteInput'));
+  await ev(`(() => { const i = document.getElementById('noteInput'); i.value = '  Phone   call on line 2 '; })()`);
+  await key('Enter', 'Enter');
+  check('Enter shows the typed message, cleaned, and closes the line', (await note()).text === 'Phone call on line 2' && !(await shown('#noteInput')), JSON.stringify(await note()));
+  check('what is on screen is not saved in the settings', (await ev(`window.api.settings.get().then((p) => JSON.stringify(p.settings.notes.list.map((n) => n.text)))`)) === '["Guest is waiting","Wrap up in 1 minute"]');
+  await key('KeyC', 'c');
+  await sleep(300);
+  check('clock only keeps the message on screen and hides the buttons', (await shown('#noteBar')) && !(await shown('#noteChips')));
+  await key('KeyC', 'c');
+  await ev(`document.getElementById('noteBar').click()`);
+  check('a click on the message clears it', !(await note()).bar);
+  await key('KeyM', 'm');
+  await key('Escape', 'Escape');
+  check('Esc closes the line without a message', !(await shown('#noteInput')) && !(await note()).bar);
+  await ev(`GC.settingsUI.open('notes')`);
+  await sleep(300);
+  check('Settings → Messages lists the two saved messages', await ev(`document.querySelectorAll('.settings-panel .list-row input[type=text]').length >= 2 && document.querySelector('.settings-panel').textContent.includes('Messages')`));
+  await ev(`GC.settingsUI.close()`);
+  await ev(`GC.settingsUI.save({ notes: { list: [] } }).then(() => 1)`);
+
   // ---- blinking before a stopset: countdown and marker blink in the last blinkSec seconds ----
   const at = (m, sec) => ev(`(() => { GC.clock.render(new Date(2026, 9, 24, 10, ${m}, ${sec})); const mk = [...document.querySelectorAll('#dial > path')].map((p) => p.getAttribute('opacity')).filter(Boolean); return JSON.stringify({ count: document.querySelector('.dial-count').getAttribute('class'), opacity: mk }); })()`).then(JSON.parse);
   await ev(`GC.settingsUI.save({ breaks: { enabled: true, marks: [0, 30], warnSec: 300, blinkSec: 60, grids: [] } }).then(() => 1)`);

@@ -26,6 +26,7 @@ The dial on the left works as in a studio clock: 60 minute segments that fill as
 
 - **Headlines**, in the middle: the RSS / Atom feeds you add (https only), one tab per source, a page of six at a time turning every few seconds, plus a scrolling ticker at the bottom. Only title, source, time and link are shown; a click opens the article in your browser. The app reads the feeds itself. A small pill in the header says how many of your feeds answered; with no feed at all the column shows a welcome with a button to add one.
 - **Weather** (optional, **off by default**), on the right: you search for places and the app finds them with Open-Meteo's geocoding. The Open-Meteo credit is always visible while the weather is on.
+- **Messages for the announcer** (*Settings → Messages*): up to nine saved short messages (120 characters each), shown large under the dial on the On Air screen. Keys `1`–`9` (or the buttons under the dial) show the saved message with that number; the same key again takes it off. `M` types a one-off message (press Enter to show it, Esc to cancel) and `0`, or a click on the message, clears it. What is on screen is not saved: after a restart the strip is empty. Saved messages are part of the backup. The message stays visible in *clock only*.
 - **Clock only** (*Settings → General*, or key `C` on the On Air screen): the dial alone, with no headlines, ticker, weather or feed status, for a wall screen. Feeds and cities stay configured and come back when you switch it off.
 
 ## ON AIR and REC
@@ -57,7 +58,7 @@ In *Settings → MicTime* (**off by default**) you switch on the timer of the Mi
 
 ## Settings
 
-Press `S` or the settings button. The settings are in tabs, among them General (language, theme, time format, time zone, always on top, clock only, keep the screen on, logo), the sections for stopsets, events, feeds, weather and buttons, MicTime, Updates, Backup and Help & About.
+Press `S` or the settings button. The settings are in tabs, among them General (language, theme, time format, time zone, always on top, clock only, keep the screen on, logo), the sections for stopsets, events, messages, feeds, weather and buttons, MicTime, Updates, Backup and Help & About.
 
 **Backup** (*Settings → Backup*): *Export* saves the whole configuration (settings, programs, buttons, feeds, cities, events, schedules, and the MicTime timer with its MIDI messages, keys, programs and colours) as `g-clock-backup-YYYY-MM-DD.json`. On import you choose between **replacing everything** and **adding only the missing items**. The file holds no passwords or keys: the app uses none.
 
