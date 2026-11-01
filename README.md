@@ -64,6 +64,8 @@ MicTime, once you switch it on, reads MIDI, keys and (if you enable it) the audi
 
 The window itself has no network access at all; everything remote goes through the main process, which accepts https addresses only. No accounts, no analytics, no telemetry.
 
+<a href="https://ko-fi.com/F8V328ADFH"><img height="36" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com"></a>
+
 ## Install
 
 Download the installer for your system from the [Releases](https://github.com/djgragra/g-clock/releases) page and check it against `SHA256SUMS.txt`.
@@ -180,3 +182,11 @@ Orologio da studio per i conduttori radiofonici: il classico quadrante a 60 spic
 ## License
 
 [MIT](LICENSE) © 2026 Graziano Melzi
+
+## Support
+
+This tool is free and will stay free, with source code. If it saved your day, you can leave a tip on Ko-fi: a thank-you, nothing more.
+
+<a href="https://ko-fi.com/F8V328ADFH"><img height="36" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" alt="Buy Me a Coffee at ko-fi.com"></a>
+
+*Italiano:* lo strumento è gratuito e resta tale, con il codice sorgente. Se ti ha salvato la giornata puoi lasciare una mancia su Ko-fi: un grazie e basta.
