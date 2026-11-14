@@ -68,6 +68,10 @@
             </span>
           </div>
         </section>
+        <!-- Messages for the announcer (Settings → Messages): the one on screen, the quick choices, the line to type a one-off -->
+        <div id="noteBar" class="note-bar" role="status" aria-live="polite" hidden><span class="note-tag" data-i18n="note.tag">MESSAGE</span><span id="noteText" class="note-text"></span></div>
+        <div id="noteWrite" class="note-write" hidden><input id="noteInput" class="note-input" type="text" maxlength="120" spellcheck="false" data-i18n-placeholder="note.placeholder" aria-label="Message"></div>
+        <div id="noteChips" class="note-chips" aria-label="Messages" hidden></div>
         <div id="eventBar" class="event-bar" role="status" hidden>
           <span class="ev-tag" data-i18n="ev.next">NEXT</span>
           <span id="evLabel" class="ev-label"></span>
@@ -274,6 +278,7 @@
   <script src="js/news.js"></script>
   <script src="js/weather.js"></script>
   <script src="js/links.js"></script>
+  <script src="js/notes.js"></script>
   <script src="js/updates.js"></script>
   <script src="js/settings.js"></script>
   <script type="module" src="js/talk-settings.js"></script>

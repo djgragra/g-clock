@@ -26,6 +26,7 @@ Il quadrante a sinistra funziona come in un orologio da studio: 60 segmenti di m
 
 - **Titoli**, al centro: i feed RSS / Atom che aggiungi (solo https), una scheda per fonte, una pagina di sei alla volta che gira ogni pochi secondi, più un ticker scorrevole in basso. Si vedono solo titolo, fonte, ora e link; un clic apre l'articolo nel browser. L'app legge i feed da sé. Una piccola pillola nell'intestazione dice quanti dei tuoi feed hanno risposto; senza nessun feed la colonna mostra un benvenuto con un pulsante per aggiungerne uno.
 - **Meteo** (facoltativo, **spento per default**), a destra: cerchi i luoghi e l'app li trova con la geocodifica di Open-Meteo. Il credito di Open-Meteo è sempre visibile finché il meteo è acceso.
+- **Messaggi per lo speaker** (*Impostazioni → Messaggi*): fino a nove messaggi brevi salvati (120 caratteri ciascuno), mostrati in grande sotto il quadrante nella schermata On Air. I tasti `1`–`9` (o i pulsanti sotto il quadrante) mostrano il messaggio salvato con quel numero; lo stesso tasto di nuovo lo toglie. `M` scrive un messaggio al volo (Invio per mostrarlo, Esc per annullare) e `0`, o un clic sul messaggio, lo cancella. Quello che è sullo schermo non viene salvato: dopo un riavvio la striscia è vuota. I messaggi salvati fanno parte del backup. Il messaggio resta visibile anche in *solo orologio*.
 - **Solo orologio** (*Impostazioni → Generale*, o tasto `C` nella schermata On Air): il solo quadrante, senza titoli, ticker, meteo né stato dei feed, per uno schermo a muro. Feed e città restano configurati e tornano quando lo spegni.
 
 ## ON AIR e REC
@@ -57,7 +58,7 @@ In *Impostazioni → MicTime* (**spento per default**) accendi il timer dell'app
 
 ## Impostazioni
 
-Premi `S` o il pulsante delle impostazioni. Le impostazioni sono in schede, tra cui Generale (lingua, tema, formato ora, fuso orario, sempre in primo piano, solo orologio, tieni lo schermo acceso, logo), le sezioni per stopset, eventi, feed, meteo e pulsanti, MicTime, Aggiornamenti, Backup e Aiuto e informazioni.
+Premi `S` o il pulsante delle impostazioni. Le impostazioni sono in schede, tra cui Generale (lingua, tema, formato ora, fuso orario, sempre in primo piano, solo orologio, tieni lo schermo acceso, logo), le sezioni per stopset, eventi, messaggi, feed, meteo e pulsanti, MicTime, Aggiornamenti, Backup e Aiuto e informazioni.
 
 **Backup** (*Impostazioni → Backup*): *Esporta* salva l'intera configurazione (impostazioni, programmi, pulsanti, feed, città, eventi, programmazioni, e il timer MicTime con i suoi messaggi MIDI, tasti, programmi e colori) come `g-clock-backup-AAAA-MM-GG.json`. All'importazione scegli tra **sostituire tutto** e **aggiungere solo ciò che manca**. Il file non contiene password né chiavi: l'app non ne usa.
 

@@ -6,10 +6,10 @@ GC.settingsUI = (() => {
   const { h, $ } = GC;
   const t = (k, p) => GC.t(k, p);
 
-  const SECTIONS = ['general', 'breaks', 'events', 'timer', 'talk', 'news', 'weather', 'buttons', 'updates', 'backup', 'about'];
+  const SECTIONS = ['general', 'breaks', 'events', 'notes', 'timer', 'talk', 'news', 'weather', 'buttons', 'updates', 'backup', 'about'];
   let current = 'general';
   let flash = null; // a message to show once when the Backup page is drawn again after an import
-  const LIMITS = { feeds: 12, links: 8, places: 4, grids: 8, events: 20 };
+  const LIMITS = { feeds: 12, links: 8, places: 4, grids: 8, events: 20, notes: 9 };
 
   // ---- small builders ----
   const row = (labelKey, control, hintKey) =>
@@ -233,6 +233,30 @@ GC.settingsUI = (() => {
       } })),
       m,
       h('p', { class: 'hint', text: t('ev.note') }));
+  }
+
+  // ---- Messages for the announcer ----
+  function notes(s) {
+    const m = msg();
+    const list = () => GC.state.settings.notes.list;
+    const write = (next, rebuild = false) => save({ notes: { list: next } }, rebuild);
+    const rows = list().map((n, i) =>
+      h('div', { class: 'list-row' },
+        h('span', { class: 'mono dim', text: String(i + 1) }),
+        text(n.text, (v) => (v ? write(list().map((x, j) => (j === i ? { ...x, text: v } : x)), true) : write(list().filter((_, j) => j !== i), true)), { maxLength: 120, class: 'grow' }),
+        h('button', { class: 'btn small icon', type: 'button', title: t('common.remove'), 'aria-label': t('common.remove'), text: '✕', onclick: () => write(list().filter((_, j) => j !== i), true) })));
+    const fresh = text('', () => {}, { maxLength: 120, class: 'grow', placeholder: t('note.new') });
+    const add = () => {
+      if (!fresh.value.trim()) return;
+      if (list().length >= LIMITS.notes) return say(m, 'note.max', 'err', { n: LIMITS.notes });
+      write([...list(), { text: fresh.value.trim() }], true);
+    };
+    fresh.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
+    return section('sec.notes', 'note.intro',
+      h('ul', { class: 'howto' }, ['note.how1', 'note.how2', 'note.how3'].map((k) => h('li', { text: t(k) }))),
+      rows.length ? h('div', { class: 'list' }, rows) : h('p', { class: 'hint', text: t('note.empty') }),
+      h('div', { class: 'list-row add' }, fresh, h('button', { class: 'btn', type: 'button', text: t('common.add'), onclick: add })),
+      m);
   }
 
   // ---- Timer ----
@@ -494,7 +518,7 @@ GC.settingsUI = (() => {
       h('p', { class: 'hint', text: t('about.unsigned') }),
       h('h2', { class: 'sub', text: t('about.keys') }),
       h('dl', { class: 'about-list' },
-        ...[['Space', 'keys.space'], ['N', 'keys.next'], ['R', 'keys.reset'], ['O', 'keys.mode'], ['C', 'keys.clockOnly'], ['F / F11', 'keys.fullscreen'], ['S', 'keys.settings'], ['← →', 'keys.news'], ['Esc', 'keys.esc']].flatMap(([k, d]) => [h('dt', { class: 'mono', text: k }), h('dd', { text: t(d) })])),
+        ...[['Space', 'keys.space'], ['N', 'keys.next'], ['R', 'keys.reset'], ['O', 'keys.mode'], ['C', 'keys.clockOnly'], ['1 – 9', 'keys.notePick'], ['0', 'keys.noteClear'], ['M', 'keys.noteWrite'], ['F / F11', 'keys.fullscreen'], ['S', 'keys.settings'], ['← →', 'keys.news'], ['Esc', 'keys.esc']].flatMap(([k, d]) => [h('dt', { class: 'mono', text: k }), h('dd', { text: t(d) })])),
       // the tip jar: one card at the bottom of this page, nowhere else (apps/COMMON-FEATURES.md, section 6)
       h('aside', { class: 'tip-card' },
         // the jar is a second link to the same page as the pill; keyboard and screen readers keep the pill only
@@ -510,7 +534,7 @@ GC.settingsUI = (() => {
     const s = GC.state.settings;
     const nav = $('settingsNav');
     nav.replaceChildren(...SECTIONS.map((id) => h('button', { class: 'nav-item' + (id === current ? ' active' : ''), type: 'button', text: t('sec.' + id), onclick: () => { GC.talkSettings?.close(); current = id; render(); } })));
-    const builders = { general, breaks, events, timer, talk: () => GC.talkSettings.build(), news, weather, buttons, updates, backup, about };
+    const builders = { general, breaks, events, notes, timer, talk: () => GC.talkSettings.build(), news, weather, buttons, updates, backup, about };
     const body = $('settingsContent');
     const scroll = body.scrollTop;
     const content = await builders[current](s);

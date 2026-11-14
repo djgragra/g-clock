@@ -152,3 +152,17 @@ test('clock only: off by default, a boolean, kept by a backup import', () => {
   assert.equal(sanitizeSettings({ clockOnly: 'yes' }).clockOnly, false);
   assert.equal(sanitizeSettings({ language: 'it' }, sanitizeSettings({ clockOnly: true })).clockOnly, true);
 });
+
+test('saved messages: empty by default, cleaned, at most 9 of 120 characters, kept by a partial update', () => {
+  assert.deepEqual(defaults().notes, { list: [] });
+  const many = Array.from({ length: 12 }, (_, i) => ({ id: `n${i}`, text: `Message ${i}` }));
+  assert.equal(sanitizeSettings({ notes: { list: many } }).notes.list.length, 9);
+  const s = sanitizeSettings({ notes: { list: [{ id: 'a', text: '  Wrap   up\n in 1 minute ' }, { id: 'b', text: '   ' }, { id: 'a', text: 'x'.repeat(300) }, null, 'text'] } });
+  assert.equal(s.notes.list.length, 2);
+  assert.equal(s.notes.list[0].text, 'Wrap up in 1 minute');
+  assert.equal(s.notes.list[1].text.length, 120);
+  assert.notEqual(s.notes.list[0].id, s.notes.list[1].id, 'ids stay unique');
+  assert.deepEqual(sanitizeSettings({ notes: 'x' }).notes, { list: [] });
+  assert.deepEqual(sanitizeSettings({ language: 'it' }, s).notes, s.notes);
+  assert.deepEqual(sanitizeSettings({ notes: { list: [{ text: 'Hi' }] } }).notes.list.map((n) => n.text), ['Hi'], 'an id is given when missing');
+});

@@ -1,5 +1,9 @@
 # Changelog
 
+## 26.10.7 — 2026-10-26
+
+- **Messages for the announcer.** Settings → Messages: save up to nine short messages (120 characters each: “Guest is waiting”, “Wrap up in 1 minute”) and show them large under the dial on the On Air screen. Keys **1**–**9** (or the buttons under the dial) show the saved message with that number, the same key again takes it off; **M** types a one-off message (Enter shows it, Esc cancels); **0**, or a click on the message, clears it. The message stays visible in *clock only*. What is on screen is not saved, so after a restart the strip is empty; the saved messages are part of the settings and the backup. Everything stays on the computer: no network, no server. Thanks to Bevan, who suggested a note area for the announcer.
+
 ## 26.10.6 — 2026-10-24
 
 - **Fix: macOS on Apple Silicon said the app was "damaged".** The Apple Silicon build had a signature that was no longer valid (macOS: "code has no resources but signature indicates they must be present"), and recent macOS versions refuse such an app instead of offering to open it. The app is now signed ad hoc during the build (no Apple account is needed) and the build checks the signature of the app inside each disk image. The first start still shows the usual "unidentified developer" notice: System Settings → Privacy & Security → Open Anyway. If you already downloaded an earlier version and it will not open, run in Terminal: `xattr -cr "/Applications/G-Clock.app" && codesign --force --deep -s - "/Applications/G-Clock.app"`.

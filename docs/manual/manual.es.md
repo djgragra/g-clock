@@ -26,6 +26,7 @@ La esfera de la izquierda funciona como en un reloj de estudio: 60 segmentos de 
 
 - **Titulares**, en el centro: los feeds RSS / Atom que añadas (solo https), una pestaña por fuente, una página de seis a la vez que cambia cada pocos segundos, y además un ticker deslizante abajo. Solo se muestran título, fuente, hora y enlace; un clic abre el artículo en tu navegador. La app lee los feeds por sí misma. Una pequeña píldora en la cabecera dice cuántos de tus feeds han respondido; sin ningún feed, la columna muestra una bienvenida con un botón para añadir uno.
 - **Tiempo** (opcional, **apagado por defecto**), a la derecha: buscas lugares y la app los encuentra con la geocodificación de Open-Meteo. El crédito de Open-Meteo está siempre visible mientras el tiempo está encendido.
+- **Mensajes para el locutor** (*Ajustes → Mensajes*): hasta nueve mensajes cortos guardados (120 caracteres cada uno), mostrados en grande bajo la esfera en la pantalla On Air. Las teclas `1`–`9` (o los botones bajo la esfera) muestran el mensaje guardado con ese número; la misma tecla otra vez lo quita. `M` escribe un mensaje al vuelo (Intro para mostrarlo, Esc para cancelar) y `0`, o un clic en el mensaje, lo borra. Lo que está en pantalla no se guarda: tras reiniciar la franja está vacía. Los mensajes guardados forman parte de la copia de seguridad. El mensaje sigue visible en *solo reloj*.
 - **Solo reloj** (*Ajustes → General*, o tecla `C` en la pantalla On Air): solo la esfera, sin titulares, ticker, tiempo ni estado de los feeds, para una pantalla de pared. Los feeds y las ciudades siguen configurados y vuelven cuando lo apagas.
 
 ## ON AIR y REC
@@ -57,7 +58,7 @@ En *Ajustes → MicTime* (**apagado por defecto**) enciendes el temporizador de 
 
 ## Ajustes
 
-Pulsa `S` o el botón de ajustes. Los ajustes están en pestañas, entre ellas General (idioma, tema, formato de hora, zona horaria, siempre visible, solo reloj, mantener la pantalla encendida, logo), las secciones de stopsets, eventos, feeds, tiempo y botones, MicTime, Actualizaciones, Copia de seguridad y Ayuda e información.
+Pulsa `S` o el botón de ajustes. Los ajustes están en pestañas, entre ellas General (idioma, tema, formato de hora, zona horaria, siempre visible, solo reloj, mantener la pantalla encendida, logo), las secciones de stopsets, eventos, mensajes, feeds, tiempo y botones, MicTime, Actualizaciones, Copia de seguridad y Ayuda e información.
 
 **Copia de seguridad** (*Ajustes → Copia de seguridad*): *Exportar* guarda toda la configuración (ajustes, programas, botones, feeds, ciudades, eventos, programaciones, y el temporizador MicTime con sus mensajes MIDI, teclas, programas y colores) como `g-clock-backup-AAAA-MM-DD.json`. Al importar eliges entre **sustituir todo** y **añadir solo lo que falta**. El archivo no contiene contraseñas ni claves: la app no usa ninguna.
 

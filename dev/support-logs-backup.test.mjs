@@ -66,7 +66,8 @@ const sample = () => sanitizeSettings({
   programs: [program('p1'), program('p2')],
   links: [{ id: 'l1', label: 'Cam', url: 'https://example.com/cam', note: 'n' }],
   breaks: { marks: [10, 40], grids: [{ id: 'g1', name: 'Morning', days: [1], from: 360, to: 720, marks: [5] }] },
-  events: { list: [{ id: 'e1', label: 'News', time: 1080, days: [1, 2], warnSec: 90 }] }
+  events: { list: [{ id: 'e1', label: 'News', time: 1080, days: [1, 2], warnSec: 90 }] },
+  notes: { list: [{ id: 'n1', text: 'Guest is waiting' }] }
 });
 
 test('file name and shape: app slug, version 1, no secrets, programs beside the settings', () => {
@@ -128,6 +129,7 @@ test('"replace everything" takes the file; "add only the missing" keeps this com
   assert.deepEqual(merged.links.map((l) => l.id), ['l9', 'l1']);
   assert.deepEqual(merged.breaks.grids.map((g) => g.id), ['g1']);
   assert.deepEqual(merged.events.list.map((e) => e.id), ['e1']);
+  assert.deepEqual(merged.notes.list.map((n) => n.id), ['n1']);
   assert.throws(() => applyImport(current, incoming, 'other'), /invalid-mode/);
   assert.deepEqual(missingItems(current, current).programs, current.programs);
 });
